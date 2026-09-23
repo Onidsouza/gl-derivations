@@ -174,3 +174,28 @@ def test_lie_bracket():
     for x in g.basis():
         for y in g.basis():
             assert x.bracket(y) == -y.bracket(x)
+            for z in g.basis():
+                assert x.bracket(y.bracket(z)) + z.bracket(x.bracket(y)) + y.bracket(z.bracket(x)) == g.zero()
+
+@pytest.mark.parametrize("value_n", [
+    (1),
+    (2),
+    (3),
+    (6)
+])
+
+def test_lie_shape_factories(value_n):
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(value_n)
+    diags = g.diagonals()
+    tr_diags = g.traceless_diagonals()
+    triang = g.strictly_upper_triangulars()
+    assert len(diags) == g.n
+    assert len(tr_diags) == g.n - 1
+    assert len(triang) == (g.dimension - g.n) // 2
+    for x in diags:
+        assert x.matrix.trace() == 1 and x.matrix.is_diagonal()
+    for x in tr_diags:
+        assert x.matrix.trace() == 0 and x.matrix.is_diagonal()

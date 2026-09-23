@@ -34,6 +34,9 @@ class GeneralLinear:
         basis(self): returns a tuple of self.dimension LieElements representing its canonical ordered basis of elementary matrices.
         coordinates(self,elem): returns a column of size n**2 with the coordinates of the element elem in the given basis.
         from_coordinates(self,values): returns a LieElement with this parent whose matrix has the given coordinates.
+        diagonals(self): returns a tuple with the matrices E(0,0), E(1,1), ..., E(n-1,n-1)
+        traceless_diagonals(self): returns a tuple with the matrices E(i,i) - E(i+1,i+1)
+        strictly_upper_triangulars(self): returns a tuple with the matrices E(i,j) for all i < j.
     """
 
     def __init__(self,val):
@@ -138,6 +141,34 @@ class GeneralLinear:
 
     def __str__(self):
         return f"GeneralLinear({self.n})"
+    
+    def diagonals(self):
+        """
+        Returns a tuple with the self.n diagonal LieElements E(i,i)
+        """
+        diag = tuple()
+        for i in range(0, self.n):
+            diag = diag + tuple([self.E(i,i)])
+        return diag
+
+    def traceless_diagonals(self):
+        """
+        Returns a tuple with the self.n - 1 traceless diagonal LieElements E(i,i) - E(i+1,i+1)
+        """
+        diag = tuple()
+        for i in range(0,self.n-1):
+            diag = diag + tuple([self.E(i,i) - self.E(i+1,i+1)])
+        return diag
+
+    def strictly_upper_triangulars(self):
+        """
+        Returns a tuple with the (self.dimension - self.n)/2  strictly upper triangular LieElements E(i,j) for i < j
+        """
+        triang = tuple()
+        for i in range(0,self.n):
+            for j in range(i+1,self.n):
+                triang = triang + tuple([self.E(i,j)])
+        return triang
 
 class LieElement:
     """
