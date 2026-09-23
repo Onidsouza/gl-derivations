@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "general-linear-derivations"
+version = "0.1.0"
+description = "Exact adjoint derivations on symmetric powers of gl(n)"
+readme = "README.md"
+requires-python = ">= 3.11"
+dependencies = ["sympy>=1.14"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "build", "twine", "ruff"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gl_derivations"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
