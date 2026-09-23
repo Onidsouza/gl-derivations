@@ -12,10 +12,10 @@ The purpose of this package is to implement the action of the rational Lie algeb
 
 # State of development
 
-- [ ] Setting up environment, files and configuration.
-- [ ] Classes, containers and input validation.
-- [ ] Setting up test environment.
-- [ ] Lie elements, coordinates and bracket.
+- [X] Setting up environment, files and configuration.
+- [X] Input validation.
+- [X] Setting up test environment.
+- [X] Lie elements, coordinates and bracket.
 - [ ] Symmetric powers and monomial coordinates.
 - [ ] The adjoint derivation and action matrices.
 - [ ] Subspaces from bases and equations.
