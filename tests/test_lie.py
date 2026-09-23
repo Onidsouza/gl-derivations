@@ -101,3 +101,60 @@ def test_gl_basis():
     expected = (g.E(0,0), g.E(0,1), g.E(1,0), g.E(1,1))
     assert len(basis) == g.dimension
     assert basis == expected
+
+def test_lie_element_arithmetic():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    expected = ImmutableMatrix([
+        [Rational(1), Rational(1)],
+        [Rational(0), Rational(0)]
+    ])
+    z = g.E(0,0) + g.E(0,1)
+    assert z.parent == g
+    assert z.matrix == expected
+    expected = ImmutableMatrix([
+        [Rational(-1), Rational(-1)],
+        [Rational(0), Rational(0)]
+    ])
+    z = -z
+    assert z.parent == g
+    assert z.matrix == expected
+    z = z-z 
+    assert z == g.zero()
+    z = g.E(0,1)*2
+    expected = ImmutableMatrix([
+        [Rational(0), Rational(2)],
+        [Rational(0), Rational(0)]
+    ])
+    assert z.parent == g
+    assert z.matrix == expected
+    z = g.E(1,0)*z
+    expected = ImmutableMatrix([
+        [Rational(0), Rational(0)],
+        [Rational(0), Rational(2)]
+    ])
+    assert z.parent == g
+    assert z.matrix == expected
+    z = Rational(-3)*z
+    expected = ImmutableMatrix([
+        [Rational(0), Rational(0)],
+        [Rational(0), Rational(-6)]
+    ])
+    assert z.parent == g
+    assert z.matrix == expected
+
+def test_gl_coordinate_conversion():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    z = g.from_coordinates(ImmutableMatrix([0,1,0,0]))
+    assert z == g.E(0,1)
+    z = g.E(0,0) - g.E(1,0)
+    assert g.coordinates(z) == ImmutableMatrix([1,0,-1,0])
+    z = g.E(1,1)
+    coord = ImmutableMatrix([1,2,Rational(2,3),4])
+    assert z == g.from_coordinates(g.coordinates(z))
+    assert coord == g.coordinates(g.from_coordinates(coord))
