@@ -158,3 +158,19 @@ def test_gl_coordinate_conversion():
     coord = ImmutableMatrix([1,2,Rational(2,3),4])
     assert z == g.from_coordinates(g.coordinates(z))
     assert coord == g.coordinates(g.from_coordinates(coord))
+
+def test_lie_bracket():
+    """
+    TODO: docstring for this test function.
+    """
+
+    g = lie.GeneralLinear(2)
+    assert g.E(0,1).bracket(g.E(1,0)) == g.E(0,0) - g.E(1,1)
+    assert g.E(0,1).bracket(g.E(0,0)) == -g.E(0,1)
+    assert g.E(0,1).bracket(g.E(1,1)) == g.E(0,1)
+    z = g.E(0,0) + g.E(1,1)
+    for x in g.basis():
+        assert z.bracket(x) == g.zero()
+    for x in g.basis():
+        for y in g.basis():
+            assert x.bracket(y) == -y.bracket(x)

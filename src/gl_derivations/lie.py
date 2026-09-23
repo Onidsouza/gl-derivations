@@ -154,6 +154,7 @@ class LieElement:
         __eq__(self,other): two elements are equal if their parents are the same and their matrices are the same.
         __str__(self): returns its parent and its matrix.
         __add__,__sub__,__neg__,__mul__,__rmul__(self,other): arithmetical operations. Rmul accepts left multiplication by a scalar, mul accepts right multiplication by another Lie element or a scalar.
+        bracket(self,other): returns the Lie bracket [self,other].
     """
     def __init__(self,parent,matrix):
         """
@@ -230,3 +231,19 @@ class LieElement:
 
     def __str__(self):
         return f"({self.parent}, {self.matrix})"
+
+    def bracket(self,other):
+        """
+        Returns the Lie bracket [self,other] = self*other - other*self.
+
+        Arguments:
+            other (LieElement): should be a Lie element with the same parent.
+
+        Returns:
+            LieElement: the result of the bracket.
+        """
+        if not isinstance(other,LieElement):
+            raise TypeError(f"Expected LieElement, got {type(other).__name__}")
+        if self.parent != other.parent:
+            raise ValueError(f"Expected matrix of size {self.parent.n}, got {other.parent.n}")
+        return self*other - other*self
