@@ -33,11 +33,13 @@ Each instance of this class represents a space S(k) of the k-th symmetric power 
 - algebra: (GeneralLinear) the Lie algebra gl(n) used for this symmetric power.
 - degree: (Integer) the degree of the homogeneous polynomials in this space.
 - dimension: (Integer) the dimension of this space, that is, the binomial coefficient \binom{n^2+k-1}{n^2-1}.
+- generators: (tuple of sympy.symbol) a tuple with the symbols 'z_i_j' representing the polynomial generators of our space.
 
 ## Methods
 
 - zero(): (SymmetricElement) returns the zero element in this symmetric power.
 - basis(): (tuple of SymmetricElement) returns the canonical basis of this symmetric power as a tuple of SymmetricElements, following the monomial ordering according to the total ordering of gl(n) in the design decisions document.
+- basis_labels(): (tuple of tuple of ints) returns the exponent labels of the canonical ordered basis.
 - coordinates(elem): (sympy.ImmutableMatrix, elem: SymmetricElement) given a SymmetricElement elem in this space, returns the column matrix representing this element in the canonical basis.
 - from_coordinates(col): (SymmetricElement, col: sympy.ImmutableMatrix or tuple of sympy.Rational) given a column matrix or a tuple of sympy.Rational of the appropriate size, returns the SymmetricElement in this space with the given coordinates in the canonical basis.
 
