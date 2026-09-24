@@ -4,7 +4,7 @@ TODO: docstring for the Symmetric module
 
 from gl_derivations.lie import GeneralLinear
 from gl_derivations._validation import exact_scalar
-from sympy import symbols, Poly, Rational, ZZ, QQ
+from sympy import symbols, Poly, Rational, ZZ, QQ, ImmutableMatrix
 from math import comb
 from itertools import combinations_with_replacement
 
@@ -18,12 +18,15 @@ class SymmetricPower:
         SymmetricPower(algebra,degree) (GeneralLinear, int): returns an instance representing the degree-th symmetric power of algebra.
 
     Methods:
+        __eq__(other): spaces are the same if they have the same algebra and same degree
         basis(): returns a tuple of SymmetricElement elements representing the canonical monomial basis of this space in descending lexographic order.
         basis_labels(): returns a tuple of integer tuples representing the monomial degrees of the canonical ordered basis of this space, in descending lexographic order.
         zero(): returns the SymmetricElement representing the zero polynomial.
         monomial(alpha): (tuple of ints) returns the SymmetricElement representing the monomial with the given tuple of exponents. Performs validation.
         from_terms(mapping): (dict from tuples to coefficients) returns the SymmetricElement which has the given coefficient at the given tuple in the supplied dictionary.
         from_poly(poly): (sympy.Poly) validates that the given polynomial makes sense (homogeneous, correct degree, correct variables, valid coefficient domain) and instantiates it as a SymmetricElement.
+        coordinates(elem): (SymmetricElement) given a symmetric element, returns the self.dimension-by-1 matrix whose entries are the coordinates of elem in the canonical basis.
+        from_coordinates(values): (sympy.ImmutableMatrix) given a matrix of size self.dimension-by-1 whose entries are valid scalars, returns the SymmetricElement with these given coordinates in the canonical ordered basis.
     """
 
     def __init__(self,algebra,degree):
@@ -147,6 +150,46 @@ class SymmetricPower:
             raise ValueError(f"Polynomial has variables not compatible with this domain: {Poly(poly,self.generators).domain}")
         return SymmetricElement(self,Poly(poly,self.generators))
 
+    def coordinates(self,elem):
+        """
+        Returns the matrix of coordinates of the given element in the canonical ordered basis of self.
+
+        Arguments:
+            elem (SymmetricElement): the element being converted. Must have self as its parent.
+
+        Returns:
+            (sympy.ImmutableMatrix) of shape self.dimension-by-1 with sympy.Rational entries.
+        """
+        if not isinstance(elem,SymmetricElement):
+            raise TypeError(f"Expected SymmetricElement, got {type(elem).__name__}")
+        if elem.parent != self:
+            raise ValueError(f"This symmetric element does not belong to this symmetric power.")
+        return ImmutableMatrix([exact_scalar(elem.poly.coeff_monomial(monom.poly.as_expr())) for monom in self.basis()])
+
+    def from_coordinates(self,*args):
+        """
+        Returns the matrix of coordinates of the given element in the canonical ordered basis of self.
+
+        Arguments:
+            *args is either a single ImmutableMatrix of size self.dimension-by-1 or a tuple of self.dimension scalars.
+
+        Returns:
+            (SymmetricElement) represented by the given coefficient matrix in the canonical basis.
+        """
+        if (len(args) == 1) and (isinstance(args[0],ImmutableMatrix)):
+            if not args[0].shape == (self.dimension,1):
+                raise IndexError(f"Expected a coordinate matrix of size {self.dimension}-by-1, got {args[0].shape}")
+            values = tuple(exact_scalar(args[0][i,0]) for i in range(0,self.dimension))
+        elif (len(args) == self.dimension):
+            values = tuple(exact_scalar(x) for x in args)
+        else:
+            raise TypeError(f"Expected 1 ImmutableMatrix or {self.dimension} scalars in the argument, got something else instead.")
+        base = self.basis()
+        element = Poly(0,self.generators)
+        for i in range(0,self.dimension):
+            element = element + values[i]*base[i].poly
+        return SymmetricElement(self,element)
+
 class SymmetricElement:
     """
     Each instance of this class represents an element of the space represented by a SymmetricPower element.
@@ -159,6 +202,8 @@ class SymmetricElement:
         SymmetricElement(parent,poly): (SymmetricPower, sympy.Poly) initializes this object with the given parent and polynomial. It does not perform validation, it should not be called by itself.
 
     Methods:
+        __eq__(other): elements are the same if they have the same parent and poly.
+        __str__: returns (self.parent, self.poly) tuple.
     """
 
     def __init__(self,parent,poly):
@@ -173,7 +218,7 @@ class SymmetricElement:
         self.poly = poly
 
     def __str__(self):
-        return f"({self.parent}, {self.poly.as_expr})"
+        return f"({self.parent}, {self.poly.as_expr()})"
 
     def __eq__(self,other):
         """

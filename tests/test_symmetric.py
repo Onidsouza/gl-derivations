@@ -3,7 +3,7 @@ TODO: docstrings for this Lie test module
 """
 
 from gl_derivations import lie, symmetric
-from sympy import Rational, Poly
+from sympy import Rational, Poly, ImmutableMatrix
 import pytest
 
 @pytest.mark.parametrize("value_n, value_k, expected_dimension", [
@@ -84,3 +84,15 @@ def test_symmetric_element_construction_from_poly():
         S.from_poly(Poly(gens[0]**2 - gens[1],gens[0],gens[1]))
     with pytest.raises(ValueError):
         S.from_poly(Poly(1,gens))
+
+def test_symmetric_element_coordinates():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    S = symmetric.SymmetricPower(g,2)
+    element = S.from_terms({(2,0,0,0) : 2, (0,1,1,0): Rational(-1,3)})
+    expected = ImmutableMatrix([Rational(2),Rational(0),Rational(0),Rational(0),Rational(0),Rational(-1,3),Rational(0),Rational(0),Rational(0),Rational(0)])
+    assert S.coordinates(element) == expected
+    assert S.from_coordinates(S.coordinates(element)) == element
+    assert S.coordinates(S.from_coordinates(expected)) == expected
