@@ -3,6 +3,7 @@ TODO: docstrings for this Lie test module
 """
 
 from gl_derivations import lie, symmetric
+from sympy import Rational, Poly
 import pytest
 
 @pytest.mark.parametrize("value_n, value_k, expected_dimension", [
@@ -54,3 +55,32 @@ def test_monomial_construction_from_tuple():
         S.monomial(True,True,0,0)
     with pytest.raises(ValueError):
         S.monomial(3,0,0,0)
+
+def test_symmetric_element_construction_from_terms():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    S = symmetric.SymmetricPower(g,2)
+    expected = S.monomial(2,0,0,0).poly - Rational(1,3)*S.monomial(0,1,1,0).poly
+    result = S.from_terms({(2,0,0,0): 1, (0,1,1,0): Rational(-1,3)})
+    assert result.poly == expected
+    assert S.from_terms(dict()) == S.zero()
+    with pytest.raises(TypeError):
+        S.from_terms({(2,0,0,0): 0.5})
+
+def test_symmetric_element_construction_from_poly():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    S = symmetric.SymmetricPower(g,2)
+    expected = symmetric.SymmetricElement(S,2*S.monomial(2,0,0,0).poly - Rational(1,3)*S.monomial(0,1,1,0).poly)
+    gens = S.generators
+    assert S.from_poly(Poly(2*(gens[0]**2) - Rational(1,3)*gens[1]*gens[2], gens[0],gens[1],gens[2])) == expected
+    with pytest.raises(ValueError):
+        S.from_poly(Poly(0.5*(gens[0]**2),gens[0]))
+    with pytest.raises(ValueError):
+        S.from_poly(Poly(gens[0]**2 - gens[1],gens[0],gens[1]))
+    with pytest.raises(ValueError):
+        S.from_poly(Poly(1,gens))

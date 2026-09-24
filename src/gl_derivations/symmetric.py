@@ -3,7 +3,8 @@ TODO: docstring for the Symmetric module
 """
 
 from gl_derivations.lie import GeneralLinear
-from sympy import symbols, Poly
+from gl_derivations._validation import exact_scalar
+from sympy import symbols, Poly, Rational, ZZ, QQ
 from math import comb
 from itertools import combinations_with_replacement
 
@@ -21,6 +22,8 @@ class SymmetricPower:
         basis_labels(): returns a tuple of integer tuples representing the monomial degrees of the canonical ordered basis of this space, in descending lexographic order.
         zero(): returns the SymmetricElement representing the zero polynomial.
         monomial(alpha): (tuple of ints) returns the SymmetricElement representing the monomial with the given tuple of exponents. Performs validation.
+        from_terms(mapping): (dict from tuples to coefficients) returns the SymmetricElement which has the given coefficient at the given tuple in the supplied dictionary.
+        from_poly(poly): (sympy.Poly) validates that the given polynomial makes sense (homogeneous, correct degree, correct variables, valid coefficient domain) and instantiates it as a SymmetricElement.
     """
 
     def __init__(self,algebra,degree):
@@ -56,7 +59,7 @@ class SymmetricPower:
         self.__basis_tuple = tuple()
         monomial_tuples = combinations_with_replacement(self.generators,self.degree)
         for tup in monomial_tuples:
-            f = SymmetricElement(self,Poly(1,self.generators))
+            f = SymmetricElement(self,Poly(Rational(1),self.generators))
             for monom in tup:
                 f.poly = f.poly*monom
             self.__basis_tuple = self.__basis_tuple + (f,)
@@ -108,6 +111,41 @@ class SymmetricPower:
             return self.basis()[self.basis_labels().index(args)]
         except ValueError:
             raise ValueError(f"Expected a valid tuple of {self.algebra.dimension} non-negative integers summing to {self.degree}, got {args}.")
+
+    def from_terms(self,mapping):
+        """
+        Returns the SymmetricElement in this space whose coefficients in a given exponent are given by this mapping.
+
+        Arguments:
+            mapping: (dict from exponent labels to coefficients). Exponent labels must be a tuple of self.algebra.dimension non-negative integers summing to self.degree. Valides through self.monomial. Coefficients must be int or Rational.
+        """
+        if not isinstance(mapping,dict):
+            raise TypeError(f"Expected a dict, got {type(mapping).__name__}")
+        f = Poly(0,self.generators)
+        for key in mapping.keys():
+            monom = self.monomial(*key).poly
+            coef = exact_scalar(mapping[key])
+            f = f+ coef*monom
+        return SymmetricElement(self,f)
+
+    def from_poly(self,poly):
+        """
+        Returns the SymmetricElement in this space whose polynomial is the given one.
+
+        Arguments:
+            poly: (sympy.Poly) must have 'QQ' domain and self.generators as its variables. Must be homogeneous of degree self.degree.
+        """
+        if not isinstance(poly,Poly):
+            raise TypeError(f"Expected sympy.Poly, got {type(poly).__name__}.")
+        if not (poly.domain == ZZ or poly.domain == QQ):
+            raise ValueError(f"Expected sympy.Poly with ZZ or QQ coefficients, got {poly.domain}")
+        if not poly.is_homogeneous:
+            raise ValueError(f"Polynomial is not homogeneous.")
+        if not poly.homogeneous_order() == self.degree:
+            raise ValueError(f"Expected polynomial of degree {self.degree}, got {poly.homogeneous_order()}")
+        if not (Poly(poly,self.generators).domain in (ZZ,QQ)):
+            raise ValueError(f"Polynomial has variables not compatible with this domain: {Poly(poly,self.generators).domain}")
+        return SymmetricElement(self,Poly(poly,self.generators))
 
 class SymmetricElement:
     """
