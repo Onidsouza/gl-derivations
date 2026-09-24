@@ -62,7 +62,7 @@ class SymmetricPower:
         self.__basis_tuple = tuple()
         monomial_tuples = combinations_with_replacement(self.generators,self.degree)
         for tup in monomial_tuples:
-            f = SymmetricElement(self,Poly(Rational(1),self.generators))
+            f = SymmetricElement(self,Poly(Rational(1),self.generators,domain=QQ))
             for monom in tup:
                 f.poly = f.poly*monom
             self.__basis_tuple = self.__basis_tuple + (f,)
@@ -86,7 +86,7 @@ class SymmetricPower:
         """
         Returns the SymmetricElement representing the zero polynomial in this space.
         """
-        return SymmetricElement(self, Poly(0,self.generators))
+        return SymmetricElement(self, Poly(0,self.generators,domain=QQ))
 
     def __eq__(self,other):
         """
@@ -124,7 +124,7 @@ class SymmetricPower:
         """
         if not isinstance(mapping,dict):
             raise TypeError(f"Expected a dict, got {type(mapping).__name__}")
-        f = Poly(0,self.generators)
+        f = Poly(0,self.generators,domain=QQ)
         for key in mapping.keys():
             monom = self.monomial(*key).poly
             coef = exact_scalar(mapping[key])
@@ -148,7 +148,7 @@ class SymmetricPower:
             raise ValueError(f"Expected polynomial of degree {self.degree}, got {poly.homogeneous_order()}")
         if not (Poly(poly,self.generators).domain in (ZZ,QQ)):
             raise ValueError(f"Polynomial has variables not compatible with this domain: {Poly(poly,self.generators).domain}")
-        return SymmetricElement(self,Poly(poly,self.generators))
+        return SymmetricElement(self,Poly(poly,self.generators,domain=QQ))
 
     def coordinates(self,elem):
         """
@@ -185,7 +185,7 @@ class SymmetricPower:
         else:
             raise TypeError(f"Expected 1 ImmutableMatrix or {self.dimension} scalars in the argument, got something else instead.")
         base = self.basis()
-        element = Poly(0,self.generators)
+        element = Poly(0,self.generators,domain=QQ)
         for i in range(0,self.dimension):
             element = element + values[i]*base[i].poly
         return SymmetricElement(self,element)
@@ -204,6 +204,7 @@ class SymmetricElement:
     Methods:
         __eq__(other): elements are the same if they have the same parent and poly.
         __str__: returns (self.parent, self.poly) tuple.
+        __add__,__sub__,__neg__,__mul__,__rmul__(self,other): arithmetical operations. mul and rul accepts multiplication by a scalar.
     """
 
     def __init__(self,parent,poly):
@@ -227,3 +228,41 @@ class SymmetricElement:
         if not isinstance(other,SymmetricElement):
             return False
         return (self.parent == other.parent) and (self.poly == other.poly)
+
+    def __add__(self,other):
+        """
+        Returns new symmetric element with added underlying polynomials, assuming they are compatible.
+        """
+        if not isinstance(other,SymmetricElement):
+            return NotImplemented
+        if self.parent != other.parent:
+            return ValueError(f"Cannot add elements of different symmetric powers.")
+        return SymmetricElement(self.parent,self.poly + other.poly)
+    
+    def __neg__(self):
+        """
+        Returns the additive negation of itself.
+        """
+        return SymmetricElement(self.parent,-self.poly)
+    
+    def __sub__(self,other):
+        """
+        Returns the new symmetric element with subtracted underlying polynomials, assuming they are compatible
+        """
+        return self + (-other)
+
+    def __mul__(self,other):
+        """
+        Multiplies itself by a scalar.
+        """
+        try:
+            result = SymmetricElement(self.parent, self.poly * exact_scalar(other))
+        except TypeError:
+            return NotImplemented
+        return result
+
+    def __rmul__(self,other):
+        """
+        Multiplies itself by a scalar.
+        """
+        return self*other

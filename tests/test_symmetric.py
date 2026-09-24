@@ -96,3 +96,16 @@ def test_symmetric_element_coordinates():
     assert S.coordinates(element) == expected
     assert S.from_coordinates(S.coordinates(element)) == element
     assert S.coordinates(S.from_coordinates(expected)) == expected
+
+def test_symmetric_element_arithmetic():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    S = symmetric.SymmetricPower(g,2)
+    element = S.from_terms({(2,0,0,0) : 2, (0,1,1,0) : Rational(-1,3)})
+    expected = S.from_terms({(2,0,0,0) : 6, (0,1,1,0) : -1})
+    assert element + (-element) == S.zero()
+    assert element *3  == expected
+    assert 3*element == expected
+    assert element + element + element == expected
