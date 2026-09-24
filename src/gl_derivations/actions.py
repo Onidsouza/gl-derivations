@@ -72,4 +72,4 @@ def action_matrix(x,V):
     result = ImmutableMatrix([0] * V.dimension)
     for element in base:
         result = result.col_insert(base.index(element)+1,V.coordinates(act(x,element)))
-    return result.col_del(0)
+    return ImmutableMatrix(result.col_del(0))
