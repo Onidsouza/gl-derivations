@@ -4,7 +4,7 @@ TODO: docstring for the Lie module
 
 from gl_derivations.lie import GeneralLinear, LieElement
 from gl_derivations.symmetric import SymmetricPower, SymmetricElement
-from sympy import symbols, Poly, QQ
+from sympy import symbols, Poly, QQ, ImmutableMatrix
 
 def __adjoint_action_on_generator(lie_element,gens,pos):
     """
@@ -50,3 +50,26 @@ def act(x,v):
             continue # no need to compute action if dv/dz_i_j = 0. We are summing ad(x,z_i_j) * dv/dz_i_j over all i,j.
         result = result + derivative*__adjoint_action_on_generator(x,gens,gens.index(letter))
     return v.parent.from_poly(result)
+
+def action_matrix(x,V):
+    """
+    Given a Lie element x and a SymmetricPower V, returns the matrix representing the adjoint action of x on V. 
+
+    Arguments:
+        x: (LieElement) the element that is acting.
+        V: (SymmetricPower) the space where the element is acting.
+
+    Returns:
+        (ImmutableMatrix): square of size V.dimension with rational entries, whose columns are the coordinates of x acting on the canonical ordered basis.
+    """
+    if not isinstance(x,LieElement):
+        raise TypeError(f"Expected LieElement, got {type(x).__name__}")
+    if not isinstance(V,SymmetricPower):
+        raise TypeError(f"Expected SymmetricPower, got {type(V).__name__}")
+    if x.parent != V.algebra:
+        raise ValueError(f"Adjoint action of {x.parent} is not defined on symmetric powers of {V.algebra}")
+    base = V.basis()
+    result = ImmutableMatrix([0] * V.dimension)
+    for element in base:
+        result = result.col_insert(base.index(element)+1,V.coordinates(act(x,element)))
+    return result.col_del(0)

@@ -144,7 +144,7 @@ class SymmetricPower:
             raise ValueError(f"Expected sympy.Poly with ZZ or QQ coefficients, got {poly.domain}")
         if not poly.is_homogeneous:
             raise ValueError(f"Polynomial is not homogeneous.")
-        if not poly.homogeneous_order() == self.degree:
+        if (not poly.homogeneous_order() == self.degree) and (poly != 0):
             raise ValueError(f"Expected polynomial of degree {self.degree}, got {poly.homogeneous_order()}")
         if not (Poly(poly,self.generators).domain in (ZZ,QQ)):
             raise ValueError(f"Polynomial has variables not compatible with this domain: {Poly(poly,self.generators).domain}")
