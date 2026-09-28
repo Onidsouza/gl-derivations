@@ -26,6 +26,7 @@ class Subspace:
     contains(self,element): (LieElement or SymmetricElement) checks if the given element belongs to this subspace.
     is_diagonal_stable(self): checks if itself is stable under the action of diagonal matrices (the subspace Subspace.D(self.parent.algebra)). Only valid if its parent is a SymmetricPower.
     weight_decomposition(self): returns a dict from weights to Subspaces corresponding to non-zero weight spaces in this decomposition. Only valid if its parent is a SymmetricPower and self.is_diagonal_stable() returns True.
+    basis(): returns a tuple of self.dimension LieElements or SymmetricElements which are a basis of this subspace.
 
     Class methods:
     from_basis(ambient,elements): (GeneralLinear or SymmetricPower, tuple of LieElements or SymmetricElements) returns a new instance of subspace where it lies in the given ambient space and is spanned by the given elements. Performs validation.
@@ -33,6 +34,8 @@ class Subspace:
     D(algebra): returns the Subspace of diagonal matrices
     D0(algebra): returns the Subspace of traceless diagonal matrices
     T(algebra): returns the Subspace of strictly upper triangular matrices
+    whole(ambient): (GeneralLinear or SymmetricPower) returns an instance of this class representing the whole ambient space as its subspace.
+    trivial(ambient): (GeneralLinear or SymmetricPower) returns an instance of this class representing the trivial zero-dimensional subspace.
     """
 
     def __init__(self,ambient,dimension,basis_matrix):
@@ -99,6 +102,20 @@ class Subspace:
         list_of_basis_coordinates = equation_matrix.nullspace()
         tuple_of_basis_vectors = (ambient.from_coordinates(x) for x in list_of_basis_coordinates)
         return Subspace.from_basis(ambient,*tuple_of_basis_vectors)
+
+    def whole(ambient):
+        """
+        returns an instance of this class representing the whole ambient space as its subspace.
+        """
+        if not (isinstance(ambient,GeneralLinear) or isinstance(ambient,SymmetricPower)):
+            raise TypeError(f"Expected GeneralLinear or Symmetric power as ambient, got {type(ambient).__name__}")
+        return Subspace.from_equations(ambient,ImmutableMatrix(0,ambient.dimension,lambda i,j: 0))
+    
+    def trivial(ambient):
+        """
+        returns an instance of this class representing the trivial zero-dimensional subspace.
+        """
+        return Subspace.from_basis(ambient)
 
     def equation_matrix(self):
         """
@@ -188,6 +205,15 @@ class Subspace:
             (self.equation_matrix()*action_matrix(h,self.ambient)*self.basis_matrix).is_zero_matrix for h in self.ambient.algebra.diagonals()
         )
 
+    def basis(self):
+        """
+        Returns a tuple of LieElements or SymmetricElements which are a basis of this subspace.
+        """
+        result = tuple()
+        for i in range(0,self.basis_matrix.shape[1]):
+            result = result + (self.ambient.from_coordinates(self.basis_matrix.col(i)),)
+        return result
+
     def weight_decomposition(self):
         """
         Returns a dictionary from weights to subspaces of this subspace which are weight spaces of the given weight. Only valid if self.ambient is a SymmetricPower
@@ -213,3 +239,24 @@ class Subspace:
             if len(basis_elements) > 0:
                 decomposition[weight] = Subspace.from_basis(self.ambient,*basis_elements)
         return decomposition
+
+    def invariants(self,X):
+        """
+        Returns the subspace of invariant elements under the action of each element of X. Only valid if self.ambient is a SymmetricPower.
+
+        Arguments:
+        X: (Subspace) ambient space must be GeneralLinear, equal to self.ambient.algebra
+
+        Returns:
+        (Subspace) of self.ambient, contained in this subspace, invariant under every element of X.
+        """
+        if not isinstance(self.ambient,SymmetricPower):
+            raise TypeError(f"Invariants only defined for subspaces of SymmetricPowers")
+        if not isinstance(X,Subspace):
+            raise TypeError(f"X must be a Subspace, got {type(X).__name__}")
+        if X.ambient != self.ambient.algebra:
+            raise ValueError(f"X must be a subspace of {self.ambient.algebra}, got {X.ambient}")
+        constraints = ImmutableMatrix(self.equation_matrix())
+        for x in X.basis():
+            constraints = ImmutableMatrix.vstack(constraints,action_matrix(x,self.ambient))
+        return Subspace.from_equations(self.ambient,constraints)

@@ -20,7 +20,7 @@ The purpose of this package is to implement the action of the rational Lie algeb
 - [X] The adjoint derivation and action matrices.
 - [X] Subspaces from bases and equations.
 - [X] Weights, stability and eigenspace decomposition.
-- [ ] Simultaneous invariants.
+- [X] Simultaneous invariants.
 - [ ] Trace evaluation and evaluation kernels.
 - [ ] Test catalogue, documentation and debugging
 - [ ] Final README, API and mathematical documentation.

@@ -2,7 +2,7 @@
 TODO: docstrings for this Weights test module
 """
 
-from gl_derivations import lie, symmetric, subspaces, weights, actions
+from gl_derivations import lie, symmetric, subspaces, actions
 from sympy import Rational, Poly, ImmutableMatrix
 import pytest
 
