@@ -1,0 +1,176 @@
+"""
+TODO: docstring for the Symmetric module
+"""
+
+from sympy import ImmutableMatrix, Rational
+from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
+from gl_derivations.symmetric import SymmetricPower, SymmetricElement
+from gl_derivations._validation import exact_scalar
+
+class Subspace:
+    """
+    Each instance of this class represents a subspace of either GeneralLinear or SymmetricPower.
+
+    Constructor:
+
+    Attributes:
+    ambient (GeneralLinear or SymmetricPower): the ambient space this subspace is contained within
+    basis_matrix (ImmutableMatrix): a matrix of size ambient.dimension-by-self.dimesion representing a basis of this subspace. Each column is one vector in the basis.
+    __equation_matrix (ImmutableMatrix): a matrix of size (ambient.dimension-self.dimension)-by-(ambient.dimension) that represents this space as its nullspace.
+    dimension (int): the dimension of this space.
+
+    Methods:
+    equations_matrix(self): Computes lazily, caches and returns __equation_matrix
+    __eq__(self,other): two subspaces are the same if they have the same ambient, same dimension, and self.equation_matrix()*other.basis_matrix is the zero matrix.
+    contains(self,element): (LieElement or SymmetricElement) checks if the given element belongs to this subspace.
+
+    Class methods:
+    from_basis(ambient,elements): (GeneralLinear or SymmetricPower, tuple of LieElements or SymmetricElements) returns a new instance of subspace where it lies in the given ambient space and is spanned by the given elements. Performs validation.
+    from_equations(ambient,equation_matrix): (GeneralLinear or SymmetricPower, ImmutableMatrix) returns the space given by the nullspace of the given matrix. Performs validation.
+    D(algebra): returns the Subspace of diagonal matrices
+    D0(algebra): returns the Subspace of traceless diagonal matrices
+    T(algebra): returns the Subspace of strictly upper triangular matrices
+    """
+
+    def __init__(self,ambient,dimension,basis_matrix):
+        """
+        Constructor for this class. Requires ambient space and dimension, at a basis matrix or an equation matrix. Does not provide validation, use class methods to construct elements safely.
+        """
+        self.ambient = ambient
+        self.basis_matrix = basis_matrix
+        self.__equation_matrix = None
+        self.dimension = dimension
+
+    def from_basis(ambient,*args):
+        """
+        Construct the subspace with the given ambient space followed by a list of elements that span it. Does validation.
+
+        Arguments:
+        ambient (GeneralLinear or SymmetricPower): the ambient space this subspace lives in.
+        *args (tuple of LieElements or SymmetricElements): the elements that span the subspace.
+
+        Returns:
+        Subspace: the one with ambient as parent and spanned by the arguments.
+        """
+        if not (isinstance(ambient,GeneralLinear) or isinstance(ambient,SymmetricPower)):
+            raise TypeError(f"Expected GeneralLinear or Symmetric power as ambient, got {type(ambient).__name__}")
+        elements = list(args)
+        if len(elements) == 0:
+            return Subspace(ambient,0,ImmutableMatrix(ambient.dimension, 0, lambda i,j: Rational(0)))
+        if not all(elem.parent == ambient for elem in elements):
+            raise TypeError(f"Not all elements belong to the given ambient space.")
+        basis_matrix = ImmutableMatrix([Rational(0)]* ambient.dimension)
+        for elem in elements:
+            basis_matrix = basis_matrix.col_insert(elements.index(elem)+1,ambient.coordinates(elem))
+        list_of_basis_vectors = basis_matrix.col_del(0).transpose().rref()[0].transpose().columnspace()
+        basis_matrix = ImmutableMatrix([Rational(0)]* ambient.dimension)
+        for column in list_of_basis_vectors:
+            basis_matrix = basis_matrix.col_insert(list_of_basis_vectors.index(column)+1,column)
+        return Subspace(ambient,basis_matrix.shape[1]-1,ImmutableMatrix(basis_matrix.col_del(0)))
+
+    def from_equations(ambient,equation_matrix):
+        """
+        Construct the subspace given by the nullspace of the given equation_matrix. Does validation.
+
+        Arguments:
+        ambient (GeneralLinear or SymmetricPower): the ambient space this subspace lives in.
+        equation_matrix (ImmutableMatrix): a matrix with ambient.dimension columns whose rows encode the homogeneous linear equations this space must satisfy.
+
+        Returns:
+        Subspace: the subspace object representing the nullspace of the given equation matrix.
+        """
+        if not (isinstance(ambient,GeneralLinear) or isinstance(ambient,SymmetricPower)):
+            raise TypeError(f"Expected GeneralLinear or Symmetric power as ambient, got {type(ambient).__name__}")
+        if not isinstance(equation_matrix, ImmutableMatrix):
+            raise TypeError(f"Expected ImmutableMatrix for equations, got {type(equation_matrix).__name__}")
+        if not (equation_matrix.shape[1] == ambient.dimension):
+            raise ValueError(f"Expected matrix with {ambient.dimension} columns, got {equation_matrix.shape[1]}")
+        for entry in equation_matrix:
+            try:
+                entry = exact_scalar(entry) # Doesn't change anything, just tries to catch type errors.
+            except TypeError:
+                raise TypeError(f"Expected matrix with valid scalar entries, got {type(entry).__name__}")
+        if equation_matrix.shape[0] == 0:
+            # if there are no equations, i.e. no rows
+            return Subspace(ambient,ambient.dimension,basis_matrix=ImmutableMatrix(ambient.dimension,ambient.dimension,lambda i,j: kronecker_delta(i,j)),equation_matrix=ImmutableMatrix(0,ambient.dimension,lambda i,j: Rational(0)))
+        list_of_basis_coordinates = equation_matrix.nullspace()
+        tuple_of_basis_vectors = (ambient.from_coordinates(x) for x in list_of_basis_coordinates)
+        return Subspace.from_basis(ambient,*tuple_of_basis_vectors)
+
+    def equation_matrix(self):
+        """
+        Computes lazily, caches and returns the (self.ambient.dimension-self.dimension)-by-(self.ambient.dimension) matrix whose nullspace is this subspace.
+        """
+        if self.__equation_matrix is None:
+            list_of_equations = self.basis_matrix.transpose().nullspace()
+            self.__equation_matrix = ImmutableMatrix([Rational(0)]*self.ambient.dimension).transpose()
+            for row in list_of_equations:
+                self.__equation_matrix = self.__equation_matrix.row_insert(list_of_equations.index(row)+1,row.transpose())
+            list_of_reduced_equations = self.__equation_matrix.rref()[0].rowspace()
+            self.__equation_matrix = ImmutableMatrix([Rational(0)]*self.ambient.dimension).transpose()
+            for row in list_of_reduced_equations:
+                self.__equation_matrix = self.__equation_matrix.row_insert(list_of_reduced_equations.index(row)+1,row)
+            self.__equation_matrix = ImmutableMatrix(self.__equation_matrix.row_del(0))
+        return self.__equation_matrix
+
+    def __eq__(self,other):
+        """
+        Two subspaces are the same if they have the same ambient, same dimension, and self.equation_matrix()*other.basis_matrix is a zero matrix.
+        """
+        if not isinstance(other,Subspace):
+            return False
+        if self.ambient != other.ambient:
+            return False
+        if self.dimension != other.dimension:
+            return False
+        return (self.equation_matrix()*other.basis_matrix).is_zero_matrix
+
+    def contains(self,element):
+        """
+        Checks whether the given element belongs to this subspace.
+
+        Arguments:
+        element (LieElement or SymmetricElement): the element we are testing.
+
+        Returns
+        bool
+        """
+        if not (isinstance(element, LieElement) or isinstance(element,SymmetricElement)):
+            raise TypeError(f"Expected LieElement or SymmetricElement, got {type(element).__name__}")
+        if self.ambient != element.parent:
+            return False
+        return (self.equation_matrix()*self.ambient.coordinates(element)).is_zero_matrix
+
+    
+    def D(algebra):
+        """
+        Returns the subspace with basis algebra.diagonals()
+
+        Arguments:
+        algebra (GeneralLinear): ambient algebra
+        """
+        if not isinstance(algebra,GeneralLinear):
+            raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
+        return Subspace.from_basis(algebra,*(algebra.diagonals()))
+    
+    def D0(algebra):
+        """
+        Returns the subspace with basis algebra.traceless_diagonals()
+
+        Arguments:
+        algebra (GeneralLinear): ambient algebra
+        """
+        if not isinstance(algebra,GeneralLinear):
+            raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
+        return Subspace.from_basis(algebra,*(algebra.traceless_diagonals()))
+
+    def T(algebra):
+        """
+        Returns the subspace with basis algebra.strictly_upper_triangulars()
+
+        Arguments:
+        algebra (GeneralLinear): ambient algebra
+        """
+        if not isinstance(algebra,GeneralLinear):
+            raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
+        return Subspace.from_basis(algebra,*(algebra.strictly_upper_triangulars()))
