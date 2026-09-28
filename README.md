@@ -18,8 +18,8 @@ The purpose of this package is to implement the action of the rational Lie algeb
 - [X] Lie elements, coordinates and bracket.
 - [X] Symmetric powers and monomial coordinates.
 - [X] The adjoint derivation and action matrices.
-- [ ] Subspaces from bases and equations.
-- [ ] Weights, stability and eigenspace decomposition.
+- [X] Subspaces from bases and equations.
+- [X] Weights, stability and eigenspace decomposition.
 - [ ] Simultaneous invariants.
 - [ ] Trace evaluation and evaluation kernels.
 - [ ] Test catalogue, documentation and debugging
