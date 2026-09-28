@@ -93,3 +93,14 @@ def test_check_cartan_subspace_factories():
     assert not T.contains(g.E(1,0))
     assert not T.contains(g.E(0,0)-g.E(1,1))
     assert T.contains(0*g.E(0,0))
+
+def test_intersection_with_sl():
+    """
+    TODO: docstring for this test function.
+    """
+    g = lie.GeneralLinear(2)
+    S = symmetric.SymmetricPower(g,2)
+    q1 = S.monomial(2,0,0,0) +2*S.monomial(1,0,0,1) + S.monomial(0,0,0,2)
+    q2 = S.monomial(1,0,0,1) - S.monomial(0,1,1,0)
+    V = subspaces.Subspace.from_basis(S,q1,q2)
+    assert V.intersection_with_symmetric_sl() == subspaces.Subspace.from_basis(S,q1 -4*q2)

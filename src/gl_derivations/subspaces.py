@@ -285,3 +285,27 @@ class Subspace:
         for column in list_of_basis_coordinates:
             list_of_basis_vectors = list_of_basis_vectors + (self.ambient.from_coordinates(self.basis_matrix * column),)
         return Subspace.from_basis(self.ambient,*list_of_basis_vectors)
+
+    def intersection_with_symmetric_sl(self):
+        """
+        Using the natural embeding of S^k(sl(n)) inside S^k(gl(n)), returns the intersection of self with S^k(sl(n))
+        """
+        if not isinstance(self.ambient,SymmetricPower):
+            raise TypeError(f"Intersections with sl are only defined for subspaces of SymmetricPowers")
+        if self.ambient.degree == 0:
+            return self # nothing to compute in degree zero
+        # The maths is that this is the kernel of the trace differential operator \sum d/d_{z_i_i}. We write down a matrix representing this operator and compute its nullspace.
+        lower_degree_space = SymmetricPower(self.ambient.algebra,self.ambient.degree-1)
+        trace_differential_matrix = ImmutableMatrix([0]* lower_degree_space.dimension)
+        for x in self.basis():
+            trace_image = lower_degree_space.zero()
+            for i in range(0,self.ambient.algebra.n):
+                z = lower_degree_space.generators[i*self.ambient.algebra.n+i]
+                trace_image.poly = trace_image.poly + x.poly.diff(z)
+            trace_differential_matrix = trace_differential_matrix.col_insert(self.basis().index(x)+1,lower_degree_space.coordinates(trace_image))
+        trace_differential_matrix = trace_differential_matrix.col_del(0)
+        list_of_basis_coordinates = trace_differential_matrix.nullspace()
+        list_of_basis_vectors = tuple()
+        for column in list_of_basis_coordinates:
+            list_of_basis_vectors = list_of_basis_vectors + (self.ambient.from_coordinates(self.basis_matrix * column),)
+        return Subspace.from_basis(self.ambient,*list_of_basis_vectors)
