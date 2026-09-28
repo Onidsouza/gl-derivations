@@ -9,3 +9,4 @@
 - The ordering of the elementary matrices follows row order: the lexographic ordering on the pair (i,j), or, in other words, matrices are read left to right, top to bottom. For n = 2, their ordering is E(0,0), E(0,1), E(1,0), E(1,1). This is a total order on the chosen basis of gl(n).
 - The monomial order in S(k) is given by labeling the exponents into an n^2-tuple of integers according to the order on the elementary matrices, then following the lexographic ordering on this tuple. For example, using a,b,c,d for the matrices E(0,0), E(0,1), E(1,0) and E(1,1) respectively, the ordering on the monomials in S(2) for n = 2 is: a^2, ab, ac, ad, b^2, bc, bd, c^2, cd, d^2.
 - Our convention is that S(0) = Q, and the adjoint action of gl(n) on S(0) is trivial (i.e. zero for every element).
+- Since we are only working with symmetric powers of the adjoint representation, we have a bijection between GL weights and SL weights, by normalizing that every GL weight has total sum 0.

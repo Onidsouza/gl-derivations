@@ -1,5 +1,5 @@
 """
-TODO: docstring for the Lie module
+TODO: docstring for the Actions module
 """
 
 from gl_derivations.lie import GeneralLinear, LieElement

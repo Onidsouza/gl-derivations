@@ -13,6 +13,10 @@ class SymmetricPower:
     Each instance of this class represents a space S(k) of the k-th symmetric power of gl(n) for some n.
 
     Instance attributes:
+        algebra (GeneralLinear): the underlying algebra we are taking a power of.
+        degree (int): the degree of the symmetric power we are taking.
+        dimension (int): the dimension of S(k)
+        generators (tuple of symbols): a tuple of the sympy symbols used to generate this monomials.
 
     Constructor:
         SymmetricPower(algebra,degree) (GeneralLinear, int): returns an instance representing the degree-th symmetric power of algebra.
@@ -27,6 +31,10 @@ class SymmetricPower:
         from_poly(poly): (sympy.Poly) validates that the given polynomial makes sense (homogeneous, correct degree, correct variables, valid coefficient domain) and instantiates it as a SymmetricElement.
         coordinates(elem): (SymmetricElement) given a symmetric element, returns the self.dimension-by-1 matrix whose entries are the coordinates of elem in the canonical basis.
         from_coordinates(values): (sympy.ImmutableMatrix) given a matrix of size self.dimension-by-1 whose entries are valid scalars, returns the SymmetricElement with these given coordinates in the canonical ordered basis.
+        weight_from_exponent_tuple(*args): (tuple of self.algebra.n non-negative integers) returns the tuple of self.algebra.n integers representing the weight of a given monomial represented by the given exponent tuple.
+        weight_elements(*args): (tuple of self.algebra.n non-negative integers) returns a tuple of SymmetricElements in the canonical basis that are of the given weight.
+        weight_element_indices(*args): (tuple of self.algebra.n non-negative integers) returns a tuple of indices in the canonical basis that are of the given weight.
+        weight_dictionary(): returns a dictionary from tuples of ints (weights) to tuples of exponents with that given weight.
     """
 
     def __init__(self,algebra,degree):
@@ -52,6 +60,7 @@ class SymmetricPower:
                 self.generators = self.generators + (symbols(f"z_{i}_{j}"),)
         self.__basis_labels_tuple = None
         self.__basis_tuple = None
+        self.__monomial_weight_dict = None
 
     def basis(self):
         """
@@ -189,6 +198,79 @@ class SymmetricPower:
         for i in range(0,self.dimension):
             element = element + values[i]*base[i].poly
         return SymmetricElement(self,element)
+
+    def weight_from_exponent_tuple(self,*args):
+        """
+        Returns the tuple representing how the diagonals act on a monomial with a given exponent tuple on a SymmetricPower.
+
+        Arguments:
+        *args (tuple of int): the monomial exponent tuple. Must have length ambient_space.algebra.dimension.
+
+        Returns:
+        tuple of ambient_space.algebra.n integers representing how each diagonal element acts.
+        """
+        if len(args) != self.algebra.dimension:
+            raise ValueError(f"Exponent tuple must have length {self.algebra.dimension}, got {len(args)}")
+        if (any(isinstance(x,bool) for x in args)) or (not all(isinstance(x,int) for x in args)):
+            raise TypeError(f"Expected a list of int, got one entry which is not an int.")
+        if sum(args) != self.degree:
+            raise ValueError(f"Degrees should sum up to {self.degree}, instead they add to {sum(args)}")
+        if not all(x >= 0 for x in args):
+            raise ValueError(f"Degrees should be non-negative integers.")
+        weights = [0] * self.algebra.n
+        for index, exponent in enumerate(args):
+            # Each exponent correspond to an element of the canonical ordered basis of g. The index of this exponent tells us which matrix element we are looking at. We can explicitly detect E(i,j) from g.n and this index alone.
+            i = index // self.algebra.n
+            j = index % self.algebra.n
+            weights[i] = weights[i] + exponent
+            weights[j] = weights[j] - exponent
+        return tuple(weights)
+
+    def weight_elements(self,*args):
+        """
+        For each tuple of self.algebra.n integers summing to zero, returns a tuple containing the SymmetricElements in the basis whose weight is the given one.
+
+        Arguments:
+        args: tuple of integers summing to zero.
+
+        Returns:
+        tuple of SymmetricElements in the basis with the given weight.
+        """
+        if tuple(args) in self.weight_dictionary().keys():
+            result = tuple()
+            for monom in self.weight_dictionary()[tuple(args)]:
+                result = result + (self.monomial(*monom),)
+            return result
+        return tuple()
+
+    def weight_element_indices(self,*args):
+        """
+        For each tuple of self.algebra.n integers summing to zero, returns a tuple containing the indices in the ordered basis whose weight is the given one.
+
+        Arguments:
+        args: tuple of integers summing to zero.
+
+        Returns:
+        tuple of indices in the basis with the given weight.
+        """
+        return tuple(self.basis().index(x) for x in self.weight_elements(*args))
+
+    def weight_dictionary(self):
+        """
+        Computes lazily, caches and store a dict from weights (monomial exponent tuples) to tuples of exponents with that given weight.
+        """
+        if self.__monomial_weight_dict is None:
+            temporary_monomial_weight_dict = dict()
+            for label in self.basis_labels():
+                weight = self.weight_from_exponent_tuple(*label)
+                if weight not in temporary_monomial_weight_dict.keys():
+                    temporary_monomial_weight_dict[weight] = [label]
+                else:
+                    temporary_monomial_weight_dict[weight].append(label)
+            self.__monomial_weight_dict = dict()
+            for key in temporary_monomial_weight_dict.keys():
+                self.__monomial_weight_dict[key] = tuple(temporary_monomial_weight_dict[key])
+        return self.__monomial_weight_dict
 
 class SymmetricElement:
     """

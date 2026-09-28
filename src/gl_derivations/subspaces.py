@@ -1,11 +1,12 @@
 """
-TODO: docstring for the Symmetric module
+TODO: docstring for the Subspace module
 """
 
 from sympy import ImmutableMatrix, Rational
 from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
 from gl_derivations.symmetric import SymmetricPower, SymmetricElement
 from gl_derivations._validation import exact_scalar
+from gl_derivations.actions import action_matrix
 
 class Subspace:
     """
@@ -23,6 +24,8 @@ class Subspace:
     equations_matrix(self): Computes lazily, caches and returns __equation_matrix
     __eq__(self,other): two subspaces are the same if they have the same ambient, same dimension, and self.equation_matrix()*other.basis_matrix is the zero matrix.
     contains(self,element): (LieElement or SymmetricElement) checks if the given element belongs to this subspace.
+    is_diagonal_stable(self): checks if itself is stable under the action of diagonal matrices (the subspace Subspace.D(self.parent.algebra)). Only valid if its parent is a SymmetricPower.
+    weight_decomposition(self): returns a dict from weights to Subspaces corresponding to non-zero weight spaces in this decomposition. Only valid if its parent is a SymmetricPower and self.is_diagonal_stable() returns True.
 
     Class methods:
     from_basis(ambient,elements): (GeneralLinear or SymmetricPower, tuple of LieElements or SymmetricElements) returns a new instance of subspace where it lies in the given ambient space and is spanned by the given elements. Performs validation.
@@ -92,7 +95,7 @@ class Subspace:
                 raise TypeError(f"Expected matrix with valid scalar entries, got {type(entry).__name__}")
         if equation_matrix.shape[0] == 0:
             # if there are no equations, i.e. no rows
-            return Subspace(ambient,ambient.dimension,basis_matrix=ImmutableMatrix(ambient.dimension,ambient.dimension,lambda i,j: kronecker_delta(i,j)),equation_matrix=ImmutableMatrix(0,ambient.dimension,lambda i,j: Rational(0)))
+            return Subspace(ambient,ambient.dimension,ImmutableMatrix(ambient.dimension,ambient.dimension,lambda i,j: kronecker_delta(i,j)))
         list_of_basis_coordinates = equation_matrix.nullspace()
         tuple_of_basis_vectors = (ambient.from_coordinates(x) for x in list_of_basis_coordinates)
         return Subspace.from_basis(ambient,*tuple_of_basis_vectors)
@@ -174,3 +177,39 @@ class Subspace:
         if not isinstance(algebra,GeneralLinear):
             raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
         return Subspace.from_basis(algebra,*(algebra.strictly_upper_triangulars()))
+
+    def is_diagonal_stable(self):
+        """
+        Returns true if this subspace is stable under the action of diagonal matrices in self.ambient.algebra. Only valid if self.ambient is a SymmetricPower
+        """
+        if not isinstance(self.ambient, SymmetricPower):
+            raise TypeError(f"Diagonal stability is only checked for subspaces of SymmetricPower.")
+        return all(
+            (self.equation_matrix()*action_matrix(h,self.ambient)*self.basis_matrix).is_zero_matrix for h in self.ambient.algebra.diagonals()
+        )
+
+    def weight_decomposition(self):
+        """
+        Returns a dictionary from weights to subspaces of this subspace which are weight spaces of the given weight. Only valid if self.ambient is a SymmetricPower
+        """
+        if not self.is_diagonal_stable():
+            raise ValueError(f"Weight space decomposition only exists for diagonal stable subspaces.")
+        all_weights = self.ambient.weight_dictionary().keys()
+        decomposition = dict()
+        for weight in all_weights:
+            support = sorted(self.ambient.weight_element_indices(*weight), reverse=True) # the indices, in the canonical basis, of the monomials in which this weight space is supported. ordered from highest to lowest.
+            constrained_matrix = ImmutableMatrix(self.basis_matrix)
+            for row_index in support:
+                constrained_matrix = constrained_matrix.row_del(row_index)
+                # in the result of this operations, for each column, we get the coefficients outside the support of the given weight.
+            list_of_coordinates = constrained_matrix.nullspace() # these are the coordinates, in the stored basis of self, of the elements with a given weight.
+            nullspace_matrix = ImmutableMatrix([Rational(0)] * self.dimension)
+            for column in list_of_coordinates:
+                nullspace_matrix = nullspace_matrix.col_insert(list_of_coordinates.index(column)+1,column)
+            nullspace_matrix = self.basis_matrix*nullspace_matrix.col_del(0) # the columns in this matrix are coordinates in self.ambient of vectors in self that are weight vectors with the given weight.
+            basis_elements = tuple()
+            for i in range(0,nullspace_matrix.shape[1]): # iterate through each column
+                basis_elements = basis_elements + (self.ambient.from_coordinates(nullspace_matrix.col(i)),)
+            if len(basis_elements) > 0:
+                decomposition[weight] = Subspace.from_basis(self.ambient,*basis_elements)
+        return decomposition

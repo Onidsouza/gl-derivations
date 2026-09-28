@@ -1,5 +1,5 @@
 """
-TODO: docstrings for this Lie test module
+TODO: docstrings for this Subspace test module
 """
 
 from gl_derivations import lie, symmetric, subspaces
