@@ -6,7 +6,7 @@ from sympy import ImmutableMatrix, Rational
 from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
 from gl_derivations.symmetric import SymmetricPower, SymmetricElement
 from gl_derivations._validation import exact_scalar
-from gl_derivations.actions import action_matrix
+from gl_derivations.actions import action_matrix, evaluate
 
 class Subspace:
     """
@@ -260,3 +260,28 @@ class Subspace:
         for x in X.basis():
             constraints = ImmutableMatrix.vstack(constraints,action_matrix(x,self.ambient))
         return Subspace.from_equations(self.ambient,constraints)
+
+    def evaluation_kernel(self,x):
+        """
+        Returns the subspace of self consisting of all elements who evaluate to 0 at x, using the trace form to map S(k) to homogeneous polynomials of degree k over g. Only valid if self.ambient is a SymmetricPower
+
+        Arguments:
+        x: (LieElement) must have the same parent as self.ambient.algebra
+
+        Returns:
+        (Subspace) having the same ambient space as self, contained in this subspace, all of its elements evaluate to 0 at x.
+        """
+        if not isinstance(self.ambient,SymmetricPower):
+            raise TypeError(f"Evaluation kernels are only defined for subspaces of SymmetricPowers")
+        if not isinstance(x,LieElement):
+            raise TypeError(f"Expected LieElement, got {type(x).__name__}")
+        if x.parent != self.ambient.algebra:
+            raise ValueError(f"Cannot evaluate elements of {self.ambient} at elements of {x.parent}")
+        if self.dimension == 0:
+            return self
+        e = ImmutableMatrix([evaluate(v,x) for v in self.basis()]).transpose() # evaluation matrix, a row with each entry being some element of self.basis evaluated at x.
+        list_of_basis_coordinates = e.nullspace()
+        list_of_basis_vectors = tuple()
+        for column in list_of_basis_coordinates:
+            list_of_basis_vectors = list_of_basis_vectors + (self.ambient.from_coordinates(self.basis_matrix * column),)
+        return Subspace.from_basis(self.ambient,*list_of_basis_vectors)

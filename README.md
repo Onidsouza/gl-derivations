@@ -21,7 +21,7 @@ The purpose of this package is to implement the action of the rational Lie algeb
 - [X] Subspaces from bases and equations.
 - [X] Weights, stability and eigenspace decomposition.
 - [X] Simultaneous invariants.
-- [ ] Trace evaluation and evaluation kernels.
+- [X] Trace evaluation and evaluation kernels.
 - [ ] Test catalogue, documentation and debugging
 - [ ] Final README, API and mathematical documentation.
 - [ ] Automated checks

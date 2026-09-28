@@ -4,7 +4,7 @@ TODO: docstring for the Actions module
 
 from gl_derivations.lie import GeneralLinear, LieElement
 from gl_derivations.symmetric import SymmetricPower, SymmetricElement
-from sympy import symbols, Poly, QQ, ImmutableMatrix
+from sympy import symbols, Poly, QQ, ImmutableMatrix, Rational
 
 def __adjoint_action_on_generator(lie_element,gens,pos):
     """
@@ -73,3 +73,35 @@ def action_matrix(x,V):
     for element in base:
         result = result.col_insert(base.index(element)+1,V.coordinates(act(x,element)))
     return ImmutableMatrix(result.col_del(0))
+
+def evaluate(v,x):
+    """
+    Given a SymmetricElement v and a LieElement x, use the trace form in gl(n) to identify S(k) with the space of homogeneous polynomials over gl(n) of degree k, and evaluate the associated polynomial v* at x. v.parent.algebra must be the same as x.parent.
+
+    Arguments:
+        v: SymmetricElement
+        x: LieElement
+
+    Returns:
+        (Rational) the value of v*(x), where v* is the image of v inder the isomorphism S(k) and Sym(k,g*) given by the trace form.
+    """
+    if not isinstance(v,SymmetricElement):
+        raise TypeError(f"Expected SymmetricElement, got {type(v).__name__}")
+    if not isinstance(x,LieElement):
+        raise TypeError(f"Expected LieElement, got {type(x).__name__}")
+    if v.parent.algebra != x.parent:
+        raise ValueError(f"Elements of {x.parent} don't act on {v.parent}")
+    monoms = v.poly.monoms() # recovers the non-zero monomial exponent tuples of v.
+    final_value = Rational(0)
+    for monomial in monoms:
+        # we go monomial by monomial, then we go generator by generator raising to the exponent.
+        term_value = v.poly.coeff_monomial(monomial)
+        for p in range(0,len(v.parent.generators)):
+            # reconstruct the matrix E(i,j) from the index of p.
+            i = p // x.parent.n
+            j = p % x.parent.n
+            if monomial[p] != 0:
+                term_value = term_value * (x.matrix[j,i]**monomial[p])
+        final_value = final_value + term_value
+    return final_value
+
