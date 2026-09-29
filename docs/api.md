@@ -283,7 +283,7 @@ exact SymPy rational number. The argument order differs from `act`.
 The trace pairing identifies each generator with the linear function
 
 $$
-z_{ij}(x)=\operatorname{tr}(E_{ij}x)=x_{ji}.
+z_{ij}(x)=\mathrm{tr}(E_{ij}x)=x_{ji}.
 $$
 
 Thus evaluation substitutes **transposed matrix entries** into the polynomial.
@@ -361,7 +361,7 @@ assert Subspace.trivial(g) == Subspace.from_basis(g)
 $(N-d,N)$ with independent rows such that
 
 $$
-Y=\operatorname{im}(B)=\ker(A),\qquad B=Y.\texttt{basis\_matrix}.
+Y=\mathrm{im}(B)=\ker(A),\qquad B=Y.\texttt{basis\_matrix}.
 $$
 
 In particular, $AB=0$. Whole and trivial spaces use the corresponding empty

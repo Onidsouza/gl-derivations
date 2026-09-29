@@ -142,7 +142,7 @@ For a subspace $Y$ of dimension $r$ in an ambient space of dimension $N$,
 coordinates. `Y.equation_matrix()` is an $(N-r)\times N$ matrix $A$ satisfying
 
 $$
-Y=\operatorname{im}B=\ker A,\qquad AB=0.
+Y=\mathrm{im}B=\ker A,\qquad AB=0.
 $$
 
 If $c$ is a column of coordinates in the stored basis of $Y$, then $Bc$ is its
@@ -347,7 +347,7 @@ not impose this condition.
 
 ## 8. Trace-form evaluation and its kernel
 
-Evaluation uses the identification $y\mapsto(A\mapsto\operatorname{tr}(yA))$.
+Evaluation uses the identification $y\mapsto(A\mapsto\mathrm{tr}(yA))$.
 Thus $z_{ij}(A)=A_{ji}$, with the indices transposed. The quadratic $bc$ hides
 this transpose, so a degree-one example makes it visible:
 

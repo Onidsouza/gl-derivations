@@ -85,7 +85,7 @@ image of basis vector $j$ in column $j$. These conventions give
 
 $$
 [x\cdot v]=M_x[v],\qquad
-Y=\operatorname{im}(B)=\ker(A),\qquad AB=0.
+Y=\mathrm{im}(B)=\ker(A),\qquad AB=0.
 $$
 
 Subspace construction may normalize a supplied spanning list. Mathematical
@@ -105,7 +105,7 @@ It preserves homogeneous degree. The identity matrix acts by zero, so the
 adjoint action of $\mathfrak{gl}_n$ factors through its traceless part.
 
 The trace form identifies a Lie element $y$ with the linear function
-$x\mapsto\operatorname{tr}(yx)$. Consequently,
+$x\mapsto\mathrm{tr}(yx)$. Consequently,
 
 $$
 z_{ij}(x)=x_{ji}.
