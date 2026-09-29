@@ -150,7 +150,7 @@ from glder import (
   a rational input.
 - Coordinates are columns. Column $j$ of an action matrix is the coordinate
   vector of the action on basis vector $j$.
-- Evaluation uses $z_{ij}(x)=\operatorname{tr}(E_{ij}x)=x_{ji}$.
+- Evaluation uses $z_{ij}(x)=\mathrm{tr}(E_{ij}x)=x_{ji}$.
 - `invariants(X)` means vectors **annihilated by every element of `X`**.
 - Construct elements and subspaces through the documented factories, and
   treat their public attributes and cached data as read-only.
