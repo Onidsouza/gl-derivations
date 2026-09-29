@@ -172,8 +172,7 @@ be expensive.
 - [gl2_walkthrough.py](./examples/gl2_walkthrough.py): executable examples and assertions.
   After installation, run `python ./examples/gl2_walkthrough.py` from the repository root.
 - [API.md](./docs/API.md): constructors, public attributes, methods, and return values.
-- [DECISIONS.md](./docs/DECISIONS.md): design choices and the
-  [0.1.0 release procedure](./docs/DECISIONS.md#releasing-010-on-github).
+- [DECISIONS.md](./docs/DECISIONS.md): design choices.
 
 The tutorial derives the quadratic invariant and explains the degree-eight
 dimension counts, including the difference between weight multiplicity and
