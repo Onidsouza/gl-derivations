@@ -1,5 +1,44 @@
-"""
-TODO: docstring for the Lie module
+"""General linear Lie algebras and matrix elements over the rationals.
+
+Provides parents for gl(n, Q), matrix elements, canonical bases,
+coordinate conversion, matrix arithmetic, and Lie brackets.
+
+Classes:
+    GeneralLinear:
+        Parent representing gl(n, Q), with constructors for matrix units
+        and elements specified by coordinates. Also provides bases of
+        the diagonal, traceless diagonal, and strictly upper triangular
+        subalgebras.
+    LieElement:
+        A matrix element with a GeneralLinear parent. Supports equality,
+        addition, subtraction, negation, scalar multiplication, matrix
+        multiplication, and the commutator bracket.
+
+Functions:
+    kronecker_delta:
+        Return the Kronecker delta as a SymPy Rational.
+
+Conventions:
+    Matrix indices are zero-based: 0 <= i, j < n.
+
+    The canonical basis consists of the matrix units E(i, j), ordered
+    first by row i and then by column j. Coordinate position i*n + j
+    therefore contains the entry in row i and column j. Coordinate
+    vectors are columns of shape (n**2, 1).
+
+    Multiplication of two LieElement instances is ordinary matrix
+    multiplication. The bracket method computes [x, y] = x*y - y*x.
+
+    GeneralLinear parents compare equal when their matrix sizes agree.
+    Elements with equal parents are compatible for arithmetic.
+
+Notes:
+    Create elements through GeneralLinear.E, GeneralLinear.zero, or
+    GeneralLinear.from_coordinates. The LieElement constructor stores
+    its arguments without validation.
+
+    The subalgebra basis methods return tuples of LieElement instances,
+    rather than subspace objects.
 """
 
 from sympy import ImmutableMatrix, Rational
@@ -9,7 +48,7 @@ from ._validation import exact_scalar, validate_index
 
 def kronecker_delta(a,b):
     """
-    Implementation of the Rational Kronecker delta. Returns Rational(1) if a == b, otherwise returns Rational(0)
+    Returns Rational(1) if a == b, otherwise Rational(0)
     """
     if a == b:
         return Rational(1)
@@ -32,8 +71,8 @@ class GeneralLinear:
         __eq__(self,other): gl(n) == gl(m) if and only if n == m.
         __str__(self): returns GeneralLinear(n) as a string.
         zero(self): returns the neutral element.
-        E(self,i,j): returns the elementary matrix with 1 in the i-th row, j-th column. Indices run from 0 to self.n.
-        basis(self): returns a tuple of self.dimension LieElements representing its canonical ordered basis of elementary matrices.
+        E(self,i,j): returns the elementary matrix with 1 in the i-th row, j-th column. Indices run from 0 to self.n-1.
+        basis(self): returns a tuple of self.dimension LieElements representing its canonical ordered basis of elementary matrices, where E_ij comes before E_kl if i < k or if i = k and j < l.
         coordinates(self,elem): returns a column of size n**2 with the coordinates of the element elem in the given basis.
         from_coordinates(self,values): returns a LieElement with this parent whose matrix has the given coordinates.
         diagonals(self): returns a tuple with the matrices E(0,0), E(1,1), ..., E(n-1,n-1)
@@ -117,7 +156,7 @@ class GeneralLinear:
         Returns a LieElement with this parent and the given values as coordinates.
 
         Arguments:
-            *args (ImmutableMatrix or tuple of self.n**2 scalars): the coordinates in the canonical ordered basis.
+            *args (ImmutableMatrix or self.n**2 scalars): the coordinates in the canonical ordered basis.
 
         Returns:
             LieElement
@@ -254,7 +293,7 @@ class LieElement:
 
     def __rmul__(self,other):
         """
-        Called if one requests an operation of the type A*B where B is a LieElement and A has not defined what right multiplication by B means. Only accepts scalars as A.
+        Return the scalar multiple other * self.
         """
         try:
             other = exact_scalar(other)

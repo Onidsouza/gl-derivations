@@ -1,5 +1,51 @@
-"""
-TODO: docstring for the Subspace module
+"""Rational subspaces of general linear Lie algebras and symmetric powers.
+
+Provides subspace construction from spanning elements or homogeneous
+linear equations, membership and equality tests, and standard matrix
+subalgebras. For symmetric-power ambients, also provides diagonal
+stability tests, weight decomposition, invariant vectors, evaluation
+kernels, and intersection with symmetric powers of traceless matrices.
+
+Classes:
+    Subspace:
+        A linear subspace of a GeneralLinear or SymmetricPower parent,
+        represented by an independent basis in ambient coordinates.
+
+Conventions:
+    All coordinates refer to the canonical ordered basis of the ambient
+    parent, and all computations use exact rational arithmetic.
+
+    If the ambient dimension is N and the subspace dimension is d,
+    basis_matrix has shape (N, d). Its columns are the ambient
+    coordinate vectors of a basis of the subspace.
+
+    equation_matrix() has shape (N - d, N). Its rows encode independent
+    homogeneous linear equations on ambient coordinate columns.
+
+    Multiplication by basis_matrix converts coordinates in the stored
+    subspace basis into ambient coordinates.
+
+    Weight tuples record eigenvalues of the diagonal matrix units,
+    using the convention of SymmetricPower. Only weight spaces of
+    positive dimension are included in a decomposition; the zero
+    weight is included when its weight space is nonzero.
+
+    Invariant vectors are annihilated by every element of the acting
+    subspace. Evaluation uses the trace-form convention implemented
+    in actions.evaluate.
+
+    Returned subspaces and weight-decomposition components retain the
+    original ambient parent.
+
+Notes:
+    Construct subspaces through from_basis, from_equations, whole,
+    trivial, D, D0, or T. The direct constructor performs no validation.
+
+    Spanning elements are reduced to a basis, so the stored basis need
+    not be the sequence supplied to from_basis.
+
+    Equation matrices are computed lazily and cached. Treat ambient,
+    basis_matrix, and dimension as read-only after construction.
 """
 
 from sympy import ImmutableMatrix, Rational
@@ -18,19 +64,22 @@ class Subspace:
 
     Attributes:
     ambient (GeneralLinear or SymmetricPower): the ambient space this subspace is contained within
-    basis_matrix (ImmutableMatrix): a matrix of size ambient.dimension-by-self.dimesion representing a basis of this subspace. Each column is one vector in the basis.
+    basis_matrix (ImmutableMatrix): a matrix of size ambient.dimension-by-self.dimension representing a basis of this subspace. Each column is one vector in the basis.
     __equation_matrix (ImmutableMatrix): a matrix of size (ambient.dimension-self.dimension)-by-(ambient.dimension) that represents this space as its nullspace.
     dimension (int): the dimension of this space.
 
     Methods:
-    equations_matrix(self): Computes lazily, caches and returns __equation_matrix
+    equation_matrix(self): Computes lazily, caches and returns __equation_matrix
     __eq__(self,other): two subspaces are the same if they have the same ambient, same dimension, and self.equation_matrix()*other.basis_matrix is the zero matrix.
     contains(self,element): (LieElement or SymmetricElement) checks if the given element belongs to this subspace.
-    is_diagonal_stable(self): checks if itself is stable under the action of diagonal matrices (the subspace Subspace.D(self.parent.algebra)). Only valid if its parent is a SymmetricPower.
+    is_diagonal_stable(self): checks if itself is stable under the action of diagonal matrices (the subspace Subspace.D(self.ambient.algebra)). Only valid if its parent is a SymmetricPower.
     weight_decomposition(self): returns a dict from weights to Subspaces corresponding to non-zero weight spaces in this decomposition. Only valid if its parent is a SymmetricPower and self.is_diagonal_stable() returns True.
     basis(): returns a tuple of self.dimension LieElements or SymmetricElements which are a basis of this subspace.
+    invariants(self,X): (Subspace with GeneralLinear as parent) returns the subspace of all elements invariant under the LieElements in X.
+    evaluation_kernel(self,x): (LieElement) use the trace form to return the subspace of all elements that vanish when evaluated at x.
+    intersection_with_symmetric_sl(self): returns the subspace that is the intersection of self with the canonical copy of S^k(sl(n)) inside S^k(gl(n))
 
-    Class methods:
+    Factory methods:
     from_basis(ambient,elements): (GeneralLinear or SymmetricPower, tuple of LieElements or SymmetricElements) returns a new instance of subspace where it lies in the given ambient space and is spanned by the given elements. Performs validation.
     from_equations(ambient,equation_matrix): (GeneralLinear or SymmetricPower, ImmutableMatrix) returns the space given by the nullspace of the given matrix. Performs validation.
     D(algebra): returns the Subspace of diagonal matrices
@@ -42,13 +91,14 @@ class Subspace:
 
     def __init__(self,ambient,dimension,basis_matrix):
         """
-        Constructor for this class. Requires ambient space and dimension, at a basis matrix or an equation matrix. Does not provide validation, use class methods to construct elements safely.
+        Constructor for this class. Requires ambient space, dimension and a basis matrix. Does not provide validation, use class methods to construct elements safely.
         """
         self.ambient = ambient
         self.basis_matrix = basis_matrix
         self.__equation_matrix = None
         self.dimension = dimension
 
+    @staticmethod
     def from_basis(ambient,*args):
         """
         Construct the subspace with the given ambient space followed by a list of elements that span it. Does validation.
@@ -65,8 +115,10 @@ class Subspace:
         elements = list(args)
         if len(elements) == 0:
             return Subspace(ambient,0,ImmutableMatrix(ambient.dimension, 0, lambda i,j: Rational(0)))
+        if not all(isinstance(elem,LieElement) or isinstance(elem,SymmetricElement) for elem in elements):
+            raise TypeError("Not all arguments are either LieElement or SymmetricElement")
         if not all(elem.parent == ambient for elem in elements):
-            raise TypeError("Not all elements belong to the given ambient space.")
+            raise ValueError("Not all elements belong to the given ambient space.")
         basis_matrix = ImmutableMatrix([Rational(0)]* ambient.dimension)
         for elem in elements:
             basis_matrix = basis_matrix.col_insert(elements.index(elem)+1,ambient.coordinates(elem))
@@ -76,6 +128,7 @@ class Subspace:
             basis_matrix = basis_matrix.col_insert(list_of_basis_vectors.index(column)+1,column)
         return Subspace(ambient,basis_matrix.shape[1]-1,ImmutableMatrix(basis_matrix.col_del(0)))
 
+    @staticmethod
     def from_equations(ambient,equation_matrix):
         """
         Construct the subspace given by the nullspace of the given equation_matrix. Does validation.
@@ -105,6 +158,7 @@ class Subspace:
         tuple_of_basis_vectors = (ambient.from_coordinates(x) for x in list_of_basis_coordinates)
         return Subspace.from_basis(ambient,*tuple_of_basis_vectors)
 
+    @staticmethod
     def whole(ambient):
         """
         returns an instance of this class representing the whole ambient space as its subspace.
@@ -113,6 +167,7 @@ class Subspace:
             raise TypeError(f"Expected GeneralLinear or Symmetric power as ambient, got {type(ambient).__name__}")
         return Subspace.from_equations(ambient,ImmutableMatrix(0,ambient.dimension,lambda i,j: 0))
     
+    @staticmethod
     def trivial(ambient):
         """
         returns an instance of this class representing the trivial zero-dimensional subspace.
@@ -164,6 +219,7 @@ class Subspace:
         return (self.equation_matrix()*self.ambient.coordinates(element)).is_zero_matrix
 
     
+    @staticmethod
     def D(algebra):
         """
         Returns the subspace with basis algebra.diagonals()
@@ -174,7 +230,8 @@ class Subspace:
         if not isinstance(algebra,GeneralLinear):
             raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
         return Subspace.from_basis(algebra,*(algebra.diagonals()))
-    
+
+    @staticmethod
     def D0(algebra):
         """
         Returns the subspace with basis algebra.traceless_diagonals()
@@ -186,6 +243,7 @@ class Subspace:
             raise TypeError(f"Expected GeneralLinear object, got {type(algebra).__name__}")
         return Subspace.from_basis(algebra,*(algebra.traceless_diagonals()))
 
+    @staticmethod
     def T(algebra):
         """
         Returns the subspace with basis algebra.strictly_upper_triangulars()
@@ -220,6 +278,8 @@ class Subspace:
         """
         Returns a dictionary from weights to subspaces of this subspace which are weight spaces of the given weight. Only valid if self.ambient is a SymmetricPower
         """
+        if self.dimension == 0:
+            return {}
         if not self.is_diagonal_stable():
             raise ValueError("Weight space decomposition only exists for diagonal stable subspaces.")
         all_weights = self.ambient.weight_dictionary().keys()

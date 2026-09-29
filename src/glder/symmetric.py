@@ -1,5 +1,49 @@
-"""
-TODO: docstring for the Symmetric module
+"""Symmetric powers of general linear Lie algebras over the rationals.
+
+Represents S^k(gl(n, Q)) using homogeneous polynomials in commuting
+symbols corresponding to the matrix units. Provides monomial bases,
+coordinate conversion, element arithmetic, and grouping of basis
+monomials by their weights for the diagonal adjoint action.
+
+Classes:
+    SymmetricPower:
+        Parent representing a fixed symmetric power of a GeneralLinear
+        algebra. Provides element constructors, ordered monomial bases,
+        coordinate conversion, and weight lookup.
+    SymmetricElement:
+        An element of a SymmetricPower, represented by a SymPy Poly.
+        Supports equality, addition, subtraction, negation, and scalar
+        multiplication.
+
+Conventions:
+    The symbol z_i_j represents the matrix unit E(i, j). Generators are
+    ordered first by row i and then by column j, using zero-based indices.
+
+    An exponent tuple has n**2 nonnegative integer entries in generator
+    order, summing to k. The canonical basis consists of ordinary
+    monomials with coefficient one, ordered by descending lexicographic
+    order of their exponent tuples.
+
+    Coordinate vectors are columns in this ordered monomial basis.
+
+    A weight tuple has n integer entries. For an exponent array alpha,
+    its r-th entry is the sum of row r minus the sum of column r.
+    This is the eigenvalue of E(r, r) under the induced adjoint action.
+    Weight entries may be negative and always sum to zero.
+
+    SymmetricPower parents compare equal when their underlying algebras
+    compare equal and their degrees agree. Element addition and
+    subtraction require equal parents.
+
+Notes:
+    The degree k may be zero, in which case the space consists of
+    constants and has basis (1,).
+
+    Construct elements through the SymmetricPower methods. The
+    SymmetricElement constructor stores its arguments without validation.
+
+    Basis elements and the weight dictionary are cached and shared.
+    Treat returned basis elements and the weight dictionary as read-only.
 """
 
 from itertools import combinations_with_replacement
@@ -17,8 +61,8 @@ class SymmetricPower:
 
     Instance attributes:
         algebra (GeneralLinear): the underlying algebra we are taking a power of.
-        degree (int): the degree of the symmetric power we are taking.
-        dimension (int): the dimension of S(k)
+        degree (int): the degree of the symmetric power we are taking, a non-negative integer.
+        dimension (int): the dimension of S(k), given by comb(n**+k-1,k) where n**2 is the size of the matrix algebra gl(n).
         generators (tuple of symbols): a tuple of the sympy symbols used to generate this monomials.
 
     Constructor:
@@ -35,7 +79,7 @@ class SymmetricPower:
         coordinates(elem): (SymmetricElement) given a symmetric element, returns the self.dimension-by-1 matrix whose entries are the coordinates of elem in the canonical basis.
         from_coordinates(values): (sympy.ImmutableMatrix) given a matrix of size self.dimension-by-1 whose entries are valid scalars, returns the SymmetricElement with these given coordinates in the canonical ordered basis.
         weight_from_exponent_tuple(*args): (tuple of self.algebra.n non-negative integers) returns the tuple of self.algebra.n integers representing the weight of a given monomial represented by the given exponent tuple.
-        weight_elements(*args): (tuple of self.algebra.n non-negative integers) returns a tuple of SymmetricElements in the canonical basis that are of the given weight.
+        weight_elements(*args): (tuple of self.algebra.n integers) returns a tuple of SymmetricElements in the canonical basis that are of the given weight.
         weight_element_indices(*args): (tuple of self.algebra.n non-negative integers) returns a tuple of indices in the canonical basis that are of the given weight.
         weight_dictionary(): returns a dictionary from tuples of ints (weights) to tuples of exponents with that given weight.
     """
@@ -67,7 +111,7 @@ class SymmetricPower:
 
     def basis(self):
         """
-        Returns a tuple of Polys for the canonical monomial basis of this space, ordered by descending lexicographic order. Computes lazily and stores in cache.
+        Returns a tuple of SymmetricElements for the canonical monomial basis of this space, ordered by descending lexicographic order. Computes lazily and stores in cache.
         """
         if not self.__basis_tuple is None:
             return self.__basis_tuple
@@ -82,10 +126,10 @@ class SymmetricPower:
 
     def basis_labels(self):
         """
-        Returns a tuple of exponent tuples for the canonical monomial basis of this space, ordered by descending lexcographic order.
+        Returns a tuple of exponent tuples for the canonical monomial basis of this space, ordered by descending lexographic order.
 
         Returns:
-            A tuple of length self.dimension. Each element of this tuple is a tuple of of self.algebra.dimension integers representing the exponents of a monomial in the given ordered basis. Each such tuple sums to self.degree. Computes it lazily once, and stores in cache.
+            A tuple of length self.dimension. Each element of this tuple is a tuple of self.algebra.dimension integers representing the exponents of a monomial in the given ordered basis. Each such tuple sums to self.degree. Computes it lazily once, and stores in cache.
         """
         if not self.__basis_labels_tuple is None:
             return self.__basis_labels_tuple
@@ -113,7 +157,7 @@ class SymmetricPower:
         Returns the monomial in this space whose exponents are the given tuple of integers.
 
         Arguments:
-            A tuple of self.algebra.dimension non-negative integers. Are checked against self.basis_labels() for validation.
+            self.algebra.dimension non-negative integers. Are checked against self.basis_labels() for validation.
 
         Returns:
             (SymmetricElement) representing the given monomial.
@@ -167,7 +211,7 @@ class SymmetricPower:
         Returns the matrix of coordinates of the given element in the canonical ordered basis of self.
 
         Arguments:
-            elem (SymmetricElement): the element being converted. Must have self as its parent.
+            elem (SymmetricElement): the element being converted. Must compare == to self as its parent.
 
         Returns:
             (sympy.ImmutableMatrix) of shape self.dimension-by-1 with sympy.Rational entries.
@@ -180,10 +224,10 @@ class SymmetricPower:
 
     def from_coordinates(self,*args):
         """
-        Returns the matrix of coordinates of the given element in the canonical ordered basis of self.
+        Returns the element whose coordinates in the canonical basis are the given ones.
 
         Arguments:
-            *args is either a single ImmutableMatrix of size self.dimension-by-1 or a tuple of self.dimension scalars.
+            *args is either a single ImmutableMatrix of size self.dimension-by-1 or separate self.dimension scalars.
 
         Returns:
             (SymmetricElement) represented by the given coefficient matrix in the canonical basis.
@@ -207,10 +251,10 @@ class SymmetricPower:
         Returns the tuple representing how the diagonals act on a monomial with a given exponent tuple on a SymmetricPower.
 
         Arguments:
-        *args (tuple of int): the monomial exponent tuple. Must have length ambient_space.algebra.dimension.
+        *args (int): the monomial exponents. Must have self.algebra.dimension separate entries.
 
         Returns:
-        tuple of ambient_space.algebra.n integers representing how each diagonal element acts.
+        tuple of self.algebra.n integers representing how each diagonal element acts.
         """
         if len(args) != self.algebra.dimension:
             raise ValueError(f"Exponent tuple must have length {self.algebra.dimension}, got {len(args)}")
@@ -254,13 +298,13 @@ class SymmetricPower:
         args: tuple of integers summing to zero.
 
         Returns:
-        tuple of indices in the basis with the given weight.
+        tuple of indices in the basis with the given weight. Returns the empty tuple if that weight is absent in this space.
         """
         return tuple(self.basis().index(x) for x in self.weight_elements(*args))
 
     def weight_dictionary(self):
         """
-        Computes lazily, caches and store a dict from weights (monomial exponent tuples) to tuples of exponents with that given weight.
+        Computes lazily, caches and store a dict from weights (tuples of integers) to tuples of exponents with that given weight.
         """
         if self.__monomial_weight_dict is None:
             temporary_monomial_weight_dict = dict()
@@ -274,6 +318,9 @@ class SymmetricPower:
             for key in temporary_monomial_weight_dict:
                 self.__monomial_weight_dict[key] = tuple(temporary_monomial_weight_dict[key])
         return self.__monomial_weight_dict
+
+    def __str__(self):
+        return f"S^{self.degree}(gl({self.algebra.n}))"
 
 class SymmetricElement:
     """
@@ -321,7 +368,7 @@ class SymmetricElement:
         if not isinstance(other,SymmetricElement):
             return NotImplemented
         if self.parent != other.parent:
-            return ValueError("Cannot add elements of different symmetric powers.")
+            raise ValueError("Cannot add elements of different symmetric powers.")
         return SymmetricElement(self.parent,self.poly + other.poly)
     
     def __neg__(self):
@@ -334,6 +381,8 @@ class SymmetricElement:
         """
         Returns the new symmetric element with subtracted underlying polynomials, assuming they are compatible
         """
+        if not isinstance(other,SymmetricElement):
+                    return NotImplemented
         return self + (-other)
 
     def __mul__(self,other):

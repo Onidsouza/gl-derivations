@@ -1,7 +1,23 @@
-"""
-TODO: Docstring for the validation module.
-"""
+"""Internal validation helpers for scalar coefficients and matrix indices.
 
+Functions:
+    exact_scalar:
+        Convert a supported exact numeric value to a SymPy rational.
+        Accepts Python integers, fractions.Fraction, and sympy.Rational
+        instances, including SymPy integers. Rejects booleans and
+        unsupported types, including floats and strings.
+    validate_index:
+        Check that an index is a Python integer, excluding booleans,
+        within a specified zero-based range. Return True on success
+        and raise an exception for an invalid index.
+
+Notes:
+    Scalar coefficients and indices have different type requirements:
+    SymPy integers are accepted as coefficients but not as indices.
+
+    The caller of validate_index is responsible for supplying a valid
+    exclusive upper bound; the bound itself is not validated.
+"""
 from fractions import Fraction
 
 from sympy import Rational

@@ -1,5 +1,42 @@
-"""
-TODO: docstring for the Actions module
+"""Induced adjoint actions and trace-form evaluation on symmetric powers.
+
+Provides the action of gl(n, Q) on S^k(gl(n, Q)), its matrix in the
+canonical monomial basis, and evaluation of symmetric elements as
+polynomial functions on gl(n, Q).
+
+Functions:
+    act:
+        Apply a Lie element to a symmetric element using the adjoint
+        action extended by derivations.
+    action_matrix:
+        Construct the matrix of this action on a SymmetricPower.
+    evaluate:
+        Evaluate a symmetric element at a Lie element through the
+        trace-form identification with polynomial functions.
+
+Conventions:
+    The generator z_i_j represents the matrix unit E(i, j), with
+    zero-based indices and generators ordered first by row, then column.
+
+    The adjoint action on generators uses [x, y] = x*y - y*x and is
+    extended to products by the Leibniz rule. It preserves symmetric
+    degree and acts as zero on constants.
+
+    Column j of an action matrix contains the coordinates of the
+    action on basis element j. Matrices therefore act on coordinate
+    columns by multiplication on the left.
+
+    Trace-form evaluation substitutes z_i_j with x.matrix[j, i],
+    since trace(E(i, j)*x) = x.matrix[j, i].
+
+    Argument order is act(x, v), action_matrix(x, V), and evaluate(v, x).
+    The relevant GeneralLinear parents must compare equal; they need
+    not be the same instance.
+
+Notes:
+    The private generator-action helper assumes valid inputs.
+    The public functions validate argument types and compatibility
+    of the underlying Lie algebras.
 """
 
 from sympy import QQ, ImmutableMatrix, Poly, Rational
