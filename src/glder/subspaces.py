@@ -4,10 +4,10 @@ TODO: docstring for the Subspace module
 
 from sympy import ImmutableMatrix, Rational
 
-from gl_derivations._validation import exact_scalar
-from gl_derivations.actions import action_matrix, evaluate
-from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
-from gl_derivations.symmetric import SymmetricElement, SymmetricPower
+from ._validation import exact_scalar
+from .actions import action_matrix, evaluate
+from .lie import GeneralLinear, LieElement, kronecker_delta
+from .symmetric import SymmetricElement, SymmetricPower
 
 
 class Subspace:

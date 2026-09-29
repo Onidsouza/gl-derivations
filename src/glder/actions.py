@@ -4,8 +4,8 @@ TODO: docstring for the Actions module
 
 from sympy import QQ, ImmutableMatrix, Poly, Rational
 
-from gl_derivations.lie import LieElement
-from gl_derivations.symmetric import SymmetricElement, SymmetricPower
+from .lie import LieElement
+from .symmetric import SymmetricElement, SymmetricPower
 
 
 def __adjoint_action_on_generator(lie_element,gens,pos):

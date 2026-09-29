@@ -7,8 +7,8 @@ from math import comb
 
 from sympy import QQ, ZZ, ImmutableMatrix, Poly, Rational, symbols
 
-from gl_derivations._validation import exact_scalar
-from gl_derivations.lie import GeneralLinear
+from ._validation import exact_scalar
+from .lie import GeneralLinear
 
 
 class SymmetricPower:

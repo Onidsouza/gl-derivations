@@ -1,5 +1,0 @@
-"""
-
-TODO: PACKAGE DOCSTRING.
-
-"""

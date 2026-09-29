@@ -1,11 +1,8 @@
-"""
-TODO: docstrings for this validation test module
-"""
 
 import pytest
 from sympy import Rational
 
-from gl_derivations._validation import exact_scalar, validate_index
+from glder._validation import exact_scalar, validate_index
 
 
 @pytest.mark.parametrize("integer_scalar_input,expected_integer_scalar_output", [
@@ -16,16 +13,10 @@ from gl_derivations._validation import exact_scalar, validate_index
 ])
 
 def test_integer_becomes_exact_scalar(integer_scalar_input, expected_integer_scalar_output):
-    """
-    TODO: docstring for this test function.
-    """
     value = exact_scalar(integer_scalar_input)
     assert (value == expected_integer_scalar_output) and isinstance(value,Rational)
 
 def test_bool_is_rejected():
-    """
-    TODO: docstring for this test function.
-    """
     with pytest.raises(TypeError):
         exact_scalar(True)
 
@@ -38,9 +29,6 @@ def test_bool_is_rejected():
 ])
 
 def test_float_is_rejected(float_scalar_input):
-    """
-    TODO: docstring for this test function.
-    """
     with pytest.raises(TypeError):
         exact_scalar(float_scalar_input)
 
@@ -52,9 +40,6 @@ def test_float_is_rejected(float_scalar_input):
 ])
 
 def test_index_is_valid(index,max_range):
-    """
-    TODO: docstring for this test function.
-    """
     assert validate_index(index,max_range)
 
 @pytest.mark.parametrize("index,max_range", [
@@ -64,9 +49,6 @@ def test_index_is_valid(index,max_range):
 ])
 
 def test_index_type_is_invalid(index,max_range):
-    """
-    TODO: docstring for this test function.
-    """
     with pytest.raises(TypeError):
         validate_index(index,max_range)
 
@@ -77,8 +59,5 @@ def test_index_type_is_invalid(index,max_range):
 ])
 
 def test_index_value_is_invalid(index,max_range):
-    """
-    TODO: docstring for this test function.
-    """
     with pytest.raises(IndexError):
         validate_index(index,max_range)

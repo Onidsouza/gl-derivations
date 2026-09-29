@@ -4,7 +4,7 @@ TODO: docstring for the Lie module
 
 from sympy import ImmutableMatrix, Rational
 
-from gl_derivations._validation import exact_scalar, validate_index
+from ._validation import exact_scalar, validate_index
 
 
 def kronecker_delta(a,b):
