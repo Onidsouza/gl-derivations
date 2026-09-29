@@ -6,15 +6,37 @@ build-backend = "hatchling.build"
 name = "glder"
 version = "0.1.0"
 description = "Exact adjoint derivations on symmetric powers of gl(n)"
+authors = [
+    { name = "Henrique Souza", email = "henrique.souza@manchester.ac.uk"}
+]
 readme = "README.md"
 requires-python = ">= 3.11"
 dependencies = ["sympy>=1.14"]
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/Onidsouza/glder"
+Issues = "https://github.com/Onidsouza/glder/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "build", "twine", "ruff"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/glder"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/glder",
+    "/tests",
+    "/pyproject.toml",
+    "/README.md",
+    "/docs/API.md",
+    "/docs/DECISIONS.md",
+    "/docs/TUTORIAL.md",
+    "/examples/gl2_walkthrough.py",
+    "/LICENSE*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
