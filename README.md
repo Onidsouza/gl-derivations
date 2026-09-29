@@ -24,7 +24,13 @@ the embedded subspace $S^k(\mathfrak{sl}_n)$.
 Use a Python version supported by the release's `pyproject.toml`. Installing
 the package also installs its declared runtime dependencies, including SymPy.
 
-For release **0.1.0**, download the wheel from this repository's GitHub
+For release **0.1.0**, use pip:
+
+```bash
+python -m pip install glder
+```
+
+It is also possible to download the wheel from this repository's GitHub
 **Releases** page. From the directory containing the downloaded file, run:
 
 ```bash
