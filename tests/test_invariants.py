@@ -2,9 +2,9 @@
 TODO: docstrings for this Invariants test module
 """
 
-from gl_derivations import lie, symmetric, subspaces, actions
-from sympy import Rational, Poly, ImmutableMatrix
-import pytest
+
+from gl_derivations import lie, subspaces, symmetric
+
 
 def test_invariant_subalgebras():
     """

@@ -2,9 +2,10 @@
 TODO: docstrings for this Evaluation test module
 """
 
-from gl_derivations import lie, symmetric, subspaces, actions
-from sympy import Rational, Poly, ImmutableMatrix
-import pytest
+from sympy import Rational
+
+from gl_derivations import actions, lie, subspaces, symmetric
+
 
 def test_evaluation():
     """

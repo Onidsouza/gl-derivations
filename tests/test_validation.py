@@ -2,9 +2,11 @@
 TODO: docstrings for this validation test module
 """
 
-from gl_derivations._validation import exact_scalar, validate_index
-from sympy import Rational
 import pytest
+from sympy import Rational
+
+from gl_derivations._validation import exact_scalar, validate_index
+
 
 @pytest.mark.parametrize("integer_scalar_input,expected_integer_scalar_output", [
     (7,Rational(7)),

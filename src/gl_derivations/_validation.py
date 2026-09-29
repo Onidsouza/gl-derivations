@@ -3,7 +3,9 @@ TODO: Docstring for the validation module.
 """
 
 from fractions import Fraction
+
 from sympy import Rational
+
 
 def exact_scalar(value):
     """

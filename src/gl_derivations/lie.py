@@ -2,8 +2,10 @@
 TODO: docstring for the Lie module
 """
 
-from gl_derivations._validation import exact_scalar, validate_index
 from sympy import ImmutableMatrix, Rational
+
+from gl_derivations._validation import exact_scalar, validate_index
+
 
 def kronecker_delta(a,b):
     """
@@ -95,8 +97,8 @@ class GeneralLinear:
         """
         if self.__basis_tuple == None:
             self.__basis_tuple = tuple()
-            for i in range(0,self.n):
-                for j in range(0, self.n):
+            for i in range(self.n):
+                for j in range(self.n):
                     self.__basis_tuple = self.__basis_tuple + tuple([self.E(i,j)])
         return self.__basis_tuple
 
@@ -125,14 +127,14 @@ class GeneralLinear:
                 raise IndexError(f"Expected a coordinate matrix of size {self.dimension}-by-1, got {args[0].shape}")
             base = self.basis()
             element = self.zero()
-            for i in range(0,self.dimension):
+            for i in range(self.dimension):
                 element = element + args[0][i,0]*base[i]
             return element
         elif (len(args) == self.dimension):
             values = tuple(exact_scalar(x) for x in args)
             base = self.basis()
             element = self.zero()
-            for i in range(0, self.dimension):
+            for i in range(self.dimension):
                 element = element + values[i]*base[i]
             return element
         else:
@@ -147,7 +149,7 @@ class GeneralLinear:
         Returns a tuple with the self.n diagonal LieElements E(i,i)
         """
         diag = tuple()
-        for i in range(0, self.n):
+        for i in range(self.n):
             diag = diag + tuple([self.E(i,i)])
         return diag
 
@@ -156,7 +158,7 @@ class GeneralLinear:
         Returns a tuple with the self.n - 1 traceless diagonal LieElements E(i,i) - E(i+1,i+1)
         """
         diag = tuple()
-        for i in range(0,self.n-1):
+        for i in range(self.n-1):
             diag = diag + tuple([self.E(i,i) - self.E(i+1,i+1)])
         return diag
 
@@ -165,7 +167,7 @@ class GeneralLinear:
         Returns a tuple with the (self.dimension - self.n)/2  strictly upper triangular LieElements E(i,j) for i < j
         """
         triang = tuple()
-        for i in range(0,self.n):
+        for i in range(self.n):
             for j in range(i+1,self.n):
                 triang = triang + tuple([self.E(i,j)])
         return triang

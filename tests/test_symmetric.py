@@ -2,9 +2,11 @@
 TODO: docstrings for this Lie test module
 """
 
-from gl_derivations import lie, symmetric
-from sympy import Rational, Poly, ImmutableMatrix
 import pytest
+from sympy import ImmutableMatrix, Poly, Rational
+
+from gl_derivations import lie, symmetric
+
 
 @pytest.mark.parametrize("value_n, value_k, expected_dimension", [
     (1,4,1),

@@ -2,9 +2,11 @@
 TODO: docstrings for this Weights test module
 """
 
-from gl_derivations import lie, symmetric, subspaces, actions
-from sympy import Rational, Poly, ImmutableMatrix
 import pytest
+from sympy import ImmutableMatrix, Rational
+
+from gl_derivations import actions, lie, subspaces, symmetric
+
 
 @pytest.mark.parametrize("value_n, value_k, monomial, weight", [
     (2,1,(1,0,0,0),(0,0)),

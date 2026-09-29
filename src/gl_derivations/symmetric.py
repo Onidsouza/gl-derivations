@@ -2,11 +2,14 @@
 TODO: docstring for the Symmetric module
 """
 
-from gl_derivations.lie import GeneralLinear
-from gl_derivations._validation import exact_scalar
-from sympy import symbols, Poly, Rational, ZZ, QQ, ImmutableMatrix
-from math import comb
 from itertools import combinations_with_replacement
+from math import comb
+
+from sympy import QQ, ZZ, ImmutableMatrix, Poly, Rational, symbols
+
+from gl_derivations._validation import exact_scalar
+from gl_derivations.lie import GeneralLinear
+
 
 class SymmetricPower:
     """
@@ -55,8 +58,8 @@ class SymmetricPower:
         self.degree = degree
         self.dimension = comb(self.algebra.dimension + self.degree -1, self.degree)
         self.generators = tuple()
-        for i in range(0,self.algebra.n):
-            for j in range(0,self.algebra.n):
+        for i in range(self.algebra.n):
+            for j in range(self.algebra.n):
                 self.generators = self.generators + (symbols(f"z_{i}_{j}"),)
         self.__basis_labels_tuple = None
         self.__basis_tuple = None
@@ -118,7 +121,7 @@ class SymmetricPower:
         if len(args) != self.algebra.dimension:
             raise TypeError(f"Expected {self.algebra.dimension} arguments, received {len(args)} instead.")
         if (any(isinstance(x,bool) for x in args)) or (not all(isinstance(x,int) for x in args)):
-            raise TypeError(f"Expected a list of int, got one entry which is not an int.")
+            raise TypeError("Expected a list of int, got one entry which is not an int.")
         try:
             return self.basis()[self.basis_labels().index(args)]
         except ValueError:
@@ -152,7 +155,7 @@ class SymmetricPower:
         if not (poly.domain == ZZ or poly.domain == QQ):
             raise ValueError(f"Expected sympy.Poly with ZZ or QQ coefficients, got {poly.domain}")
         if not poly.is_homogeneous:
-            raise ValueError(f"Polynomial is not homogeneous.")
+            raise ValueError("Polynomial is not homogeneous.")
         if (not poly.homogeneous_order() == self.degree) and (poly != 0):
             raise ValueError(f"Expected polynomial of degree {self.degree}, got {poly.homogeneous_order()}")
         if not (Poly(poly,self.generators).domain in (ZZ,QQ)):
@@ -172,7 +175,7 @@ class SymmetricPower:
         if not isinstance(elem,SymmetricElement):
             raise TypeError(f"Expected SymmetricElement, got {type(elem).__name__}")
         if elem.parent != self:
-            raise ValueError(f"This symmetric element does not belong to this symmetric power.")
+            raise ValueError("This symmetric element does not belong to this symmetric power.")
         return ImmutableMatrix([exact_scalar(elem.poly.coeff_monomial(monom.poly.as_expr())) for monom in self.basis()])
 
     def from_coordinates(self,*args):
@@ -188,14 +191,14 @@ class SymmetricPower:
         if (len(args) == 1) and (isinstance(args[0],ImmutableMatrix)):
             if not args[0].shape == (self.dimension,1):
                 raise IndexError(f"Expected a coordinate matrix of size {self.dimension}-by-1, got {args[0].shape}")
-            values = tuple(exact_scalar(args[0][i,0]) for i in range(0,self.dimension))
+            values = tuple(exact_scalar(args[0][i,0]) for i in range(self.dimension))
         elif (len(args) == self.dimension):
             values = tuple(exact_scalar(x) for x in args)
         else:
             raise TypeError(f"Expected 1 ImmutableMatrix or {self.dimension} scalars in the argument, got something else instead.")
         base = self.basis()
         element = Poly(0,self.generators,domain=QQ)
-        for i in range(0,self.dimension):
+        for i in range(self.dimension):
             element = element + values[i]*base[i].poly
         return SymmetricElement(self,element)
 
@@ -212,11 +215,11 @@ class SymmetricPower:
         if len(args) != self.algebra.dimension:
             raise ValueError(f"Exponent tuple must have length {self.algebra.dimension}, got {len(args)}")
         if (any(isinstance(x,bool) for x in args)) or (not all(isinstance(x,int) for x in args)):
-            raise TypeError(f"Expected a list of int, got one entry which is not an int.")
+            raise TypeError("Expected a list of int, got one entry which is not an int.")
         if sum(args) != self.degree:
             raise ValueError(f"Degrees should sum up to {self.degree}, instead they add to {sum(args)}")
         if not all(x >= 0 for x in args):
-            raise ValueError(f"Degrees should be non-negative integers.")
+            raise ValueError("Degrees should be non-negative integers.")
         weights = [0] * self.algebra.n
         for index, exponent in enumerate(args):
             # Each exponent correspond to an element of the canonical ordered basis of g. The index of this exponent tells us which matrix element we are looking at. We can explicitly detect E(i,j) from g.n and this index alone.
@@ -263,12 +266,12 @@ class SymmetricPower:
             temporary_monomial_weight_dict = dict()
             for label in self.basis_labels():
                 weight = self.weight_from_exponent_tuple(*label)
-                if weight not in temporary_monomial_weight_dict.keys():
+                if weight not in temporary_monomial_weight_dict:
                     temporary_monomial_weight_dict[weight] = [label]
                 else:
                     temporary_monomial_weight_dict[weight].append(label)
             self.__monomial_weight_dict = dict()
-            for key in temporary_monomial_weight_dict.keys():
+            for key in temporary_monomial_weight_dict:
                 self.__monomial_weight_dict[key] = tuple(temporary_monomial_weight_dict[key])
         return self.__monomial_weight_dict
 
@@ -318,7 +321,7 @@ class SymmetricElement:
         if not isinstance(other,SymmetricElement):
             return NotImplemented
         if self.parent != other.parent:
-            return ValueError(f"Cannot add elements of different symmetric powers.")
+            return ValueError("Cannot add elements of different symmetric powers.")
         return SymmetricElement(self.parent,self.poly + other.poly)
     
     def __neg__(self):

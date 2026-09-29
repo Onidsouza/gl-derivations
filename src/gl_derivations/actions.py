@@ -2,9 +2,11 @@
 TODO: docstring for the Actions module
 """
 
-from gl_derivations.lie import GeneralLinear, LieElement
-from gl_derivations.symmetric import SymmetricPower, SymmetricElement
-from sympy import symbols, Poly, QQ, ImmutableMatrix, Rational
+from sympy import QQ, ImmutableMatrix, Poly, Rational
+
+from gl_derivations.lie import LieElement
+from gl_derivations.symmetric import SymmetricElement, SymmetricPower
+
 
 def __adjoint_action_on_generator(lie_element,gens,pos):
     """
@@ -21,9 +23,9 @@ def __adjoint_action_on_generator(lie_element,gens,pos):
     i = pos // lie_element.parent.n
     j = pos % lie_element.parent.n
     result = Poly(0,gens,domain=QQ)
-    for a in range(0,lie_element.parent.n):
+    for a in range(lie_element.parent.n):
         result = result + lie_element.matrix[a,i]*gens[a*lie_element.parent.n + j] # adds the result of multiplying the given generator on the left by lie_element
-    for b in range(0,lie_element.parent.n):
+    for b in range(lie_element.parent.n):
         result = result - lie_element.matrix[j,b]*gens[i*lie_element.parent.n + b] # subtracts the result of multiplying the given generator on the right by lie_element
     return result
 
@@ -96,7 +98,7 @@ def evaluate(v,x):
     for monomial in monoms:
         # we go monomial by monomial, then we go generator by generator raising to the exponent.
         term_value = v.poly.coeff_monomial(monomial)
-        for p in range(0,len(v.parent.generators)):
+        for p in range(len(v.parent.generators)):
             # reconstruct the matrix E(i,j) from the index of p.
             i = p // x.parent.n
             j = p % x.parent.n

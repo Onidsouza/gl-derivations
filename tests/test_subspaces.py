@@ -2,9 +2,10 @@
 TODO: docstrings for this Subspace test module
 """
 
-from gl_derivations import lie, symmetric, subspaces
-from sympy import Rational, Poly, ImmutableMatrix
-import pytest
+from sympy import ImmutableMatrix
+
+from gl_derivations import lie, subspaces, symmetric
+
 
 def test_subspace_construction_from_basis():
     """

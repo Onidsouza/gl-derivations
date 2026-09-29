@@ -3,10 +3,12 @@ TODO: docstring for the Subspace module
 """
 
 from sympy import ImmutableMatrix, Rational
-from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
-from gl_derivations.symmetric import SymmetricPower, SymmetricElement
+
 from gl_derivations._validation import exact_scalar
 from gl_derivations.actions import action_matrix, evaluate
+from gl_derivations.lie import GeneralLinear, LieElement, kronecker_delta
+from gl_derivations.symmetric import SymmetricElement, SymmetricPower
+
 
 class Subspace:
     """
@@ -64,7 +66,7 @@ class Subspace:
         if len(elements) == 0:
             return Subspace(ambient,0,ImmutableMatrix(ambient.dimension, 0, lambda i,j: Rational(0)))
         if not all(elem.parent == ambient for elem in elements):
-            raise TypeError(f"Not all elements belong to the given ambient space.")
+            raise TypeError("Not all elements belong to the given ambient space.")
         basis_matrix = ImmutableMatrix([Rational(0)]* ambient.dimension)
         for elem in elements:
             basis_matrix = basis_matrix.col_insert(elements.index(elem)+1,ambient.coordinates(elem))
@@ -200,7 +202,7 @@ class Subspace:
         Returns true if this subspace is stable under the action of diagonal matrices in self.ambient.algebra. Only valid if self.ambient is a SymmetricPower
         """
         if not isinstance(self.ambient, SymmetricPower):
-            raise TypeError(f"Diagonal stability is only checked for subspaces of SymmetricPower.")
+            raise TypeError("Diagonal stability is only checked for subspaces of SymmetricPower.")
         return all(
             (self.equation_matrix()*action_matrix(h,self.ambient)*self.basis_matrix).is_zero_matrix for h in self.ambient.algebra.diagonals()
         )
@@ -210,7 +212,7 @@ class Subspace:
         Returns a tuple of LieElements or SymmetricElements which are a basis of this subspace.
         """
         result = tuple()
-        for i in range(0,self.basis_matrix.shape[1]):
+        for i in range(self.basis_matrix.shape[1]):
             result = result + (self.ambient.from_coordinates(self.basis_matrix.col(i)),)
         return result
 
@@ -219,7 +221,7 @@ class Subspace:
         Returns a dictionary from weights to subspaces of this subspace which are weight spaces of the given weight. Only valid if self.ambient is a SymmetricPower
         """
         if not self.is_diagonal_stable():
-            raise ValueError(f"Weight space decomposition only exists for diagonal stable subspaces.")
+            raise ValueError("Weight space decomposition only exists for diagonal stable subspaces.")
         all_weights = self.ambient.weight_dictionary().keys()
         decomposition = dict()
         for weight in all_weights:
@@ -234,7 +236,7 @@ class Subspace:
                 nullspace_matrix = nullspace_matrix.col_insert(list_of_coordinates.index(column)+1,column)
             nullspace_matrix = self.basis_matrix*nullspace_matrix.col_del(0) # the columns in this matrix are coordinates in self.ambient of vectors in self that are weight vectors with the given weight.
             basis_elements = tuple()
-            for i in range(0,nullspace_matrix.shape[1]): # iterate through each column
+            for i in range(nullspace_matrix.shape[1]): # iterate through each column
                 basis_elements = basis_elements + (self.ambient.from_coordinates(nullspace_matrix.col(i)),)
             if len(basis_elements) > 0:
                 decomposition[weight] = Subspace.from_basis(self.ambient,*basis_elements)
@@ -251,7 +253,7 @@ class Subspace:
         (Subspace) of self.ambient, contained in this subspace, invariant under every element of X.
         """
         if not isinstance(self.ambient,SymmetricPower):
-            raise TypeError(f"Invariants only defined for subspaces of SymmetricPowers")
+            raise TypeError("Invariants only defined for subspaces of SymmetricPowers")
         if not isinstance(X,Subspace):
             raise TypeError(f"X must be a Subspace, got {type(X).__name__}")
         if X.ambient != self.ambient.algebra:
@@ -272,7 +274,7 @@ class Subspace:
         (Subspace) having the same ambient space as self, contained in this subspace, all of its elements evaluate to 0 at x.
         """
         if not isinstance(self.ambient,SymmetricPower):
-            raise TypeError(f"Evaluation kernels are only defined for subspaces of SymmetricPowers")
+            raise TypeError("Evaluation kernels are only defined for subspaces of SymmetricPowers")
         if not isinstance(x,LieElement):
             raise TypeError(f"Expected LieElement, got {type(x).__name__}")
         if x.parent != self.ambient.algebra:
@@ -291,7 +293,7 @@ class Subspace:
         Using the natural embeding of S^k(sl(n)) inside S^k(gl(n)), returns the intersection of self with S^k(sl(n))
         """
         if not isinstance(self.ambient,SymmetricPower):
-            raise TypeError(f"Intersections with sl are only defined for subspaces of SymmetricPowers")
+            raise TypeError("Intersections with sl are only defined for subspaces of SymmetricPowers")
         if self.ambient.degree == 0:
             return self # nothing to compute in degree zero
         # The maths is that this is the kernel of the trace differential operator \sum d/d_{z_i_i}. We write down a matrix representing this operator and compute its nullspace.
@@ -299,7 +301,7 @@ class Subspace:
         trace_differential_matrix = ImmutableMatrix([0]* lower_degree_space.dimension)
         for x in self.basis():
             trace_image = lower_degree_space.zero()
-            for i in range(0,self.ambient.algebra.n):
+            for i in range(self.ambient.algebra.n):
                 z = lower_degree_space.generators[i*self.ambient.algebra.n+i]
                 trace_image.poly = trace_image.poly + x.poly.diff(z)
             trace_differential_matrix = trace_differential_matrix.col_insert(self.basis().index(x)+1,lower_degree_space.coordinates(trace_image))

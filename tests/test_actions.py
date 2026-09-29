@@ -2,9 +2,11 @@
 TODO: docstrings for this Lie test module
 """
 
-from gl_derivations import lie,symmetric,actions
-from sympy import Rational, Poly, ImmutableMatrix, zeros
 import pytest
+from sympy import ImmutableMatrix, zeros
+
+from gl_derivations import actions, lie, symmetric
+
 
 def test_adjoint_action():
     """
